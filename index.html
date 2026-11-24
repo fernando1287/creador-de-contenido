@@ -166,6 +166,7 @@ a.smallbtn{color:inherit;text-decoration:none}
 .lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .lgrid .chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;text-align:left;font-size:13px}
 .lgrid .chip small{margin-left:auto;font-size:10px;opacity:.75}
+.diag{font:12px/1.5 ui-monospace,Menlo,monospace;background:#0b0f14;border:1px solid var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;max-height:50vh;overflow:auto}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static;grid-row:1}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
 @media(max-width:580px){.top-actions{justify-content:flex-start}.top-actions .btn{flex:1 1 auto;justify-content:center}.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
@@ -227,6 +228,7 @@ a.smallbtn{color:inherit;text-decoration:none}
             <select id="ttsVoiceEn"></select>
             <button class="smallbtn" id="allLangBtn">🌐 Traducir todo el video a…</button>
             <button class="smallbtn" id="ttsAll">🔊 Convertir todos los textos a voz</button>
+            <button class="smallbtn" id="ttsDiag">🩺 Probar la voz (si no funciona)</button>
             <span class="micro">La primera vez descarga la voz (necesita internet). Después funciona sin internet.</span>
           </div>
           <div class="set-row"><span class="set-title">Música de fondo (para todo el video)</span>
@@ -588,7 +590,7 @@ async function textToVoice(s,auto){
     await setAudio(s,wav,aname);
     const el=root.querySelector(`[data-id="${s.id}"]`);if(el&&!auto)playVoice(s,el);
     return true;
-  }catch(e){console.error(e);set('🔊 Texto a voz');toast(e&&e.message==='novoice'?`Todavía no hay voz automática en ${langOf(s.lang).n.toLowerCase()}. El texto sí quedó traducido; puedes grabar tu voz.`:!navigator.onLine?'Necesitas internet la primera vez para descargar la voz.':`No se pudo crear la voz. Detalle: ${String(e&&e.message||e).slice(0,140)}`,9000);return false}
+  }catch(e){console.error(e);set('🔊 Texto a voz');toast(e&&e.message==='novoice'?`Todavía no hay voz automática en ${langOf(s.lang).n.toLowerCase()}. El texto sí quedó traducido; puedes grabar tu voz.`:!navigator.onLine?'Necesitas internet la primera vez para descargar la voz.':`No se pudo crear la voz. Detalle: ${String(e&&e.message||e).slice(0,140)} — Usa “🩺 Probar la voz” en Ajustes.`,9000);return false}
   finally{ttsBusy=false}
 }
 $('#ttsVoiceEn').onchange=e=>{settings.ttsVoiceEn=e.target.value;try{localStorage.setItem('ttsVoiceEn',settings.ttsVoiceEn)}catch{}};
@@ -682,6 +684,44 @@ async function allLang(to){
   for(let i=0;i<list.length;i++){b.textContent=`⏳ Escena ${i+1} de ${list.length}…`;if(await setSceneLang(list[i],to,true))ok++;else break}
   b.disabled=false;b.textContent=lbl;if(ok)toast(`Listo: ${ok} escena${ok>1?'s':''} en ${langOf(to).n.toLowerCase()}.`);
 }
+/* ---------- diagnóstico de la voz ---------- */
+$('#ttsDiag').onclick=async()=>{
+  const lines=[];let alive=true;
+  openProj('🩺 Probar la voz',`<p class="micro" style="margin:0;font-size:12px">Voy a revisar paso por paso. Si algo sale con ❌, toca “Copiar reporte” y mándaselo a Claude.</p><div class="diag" id="dgOut">Iniciando…</div><div class="fx-actions"><button class="btn primary" id="dgCopy">📋 Copiar reporte</button><button class="btn hidden" id="dgPlay">▶ Escuchar la prueba</button></div>`);
+  const out=()=>{const e=$('#dgOut');if(e)e.textContent=lines.join('\n')};
+  const log=(ok,t)=>{lines.push((ok===true?'✅ ':ok===false?'❌ ':'• ')+t);out()};
+  const upd=t=>{lines[lines.length-1]='• '+t;out()};
+  $('#dgCopy').onclick=async()=>{try{await navigator.clipboard.writeText(lines.join('\n'));toast('Reporte copiado. Pégalo en el chat con Claude.')}catch{toast('Mantén presionado el reporte para copiarlo.')}};
+  $('#pbClose').addEventListener('click',()=>alive=false,{once:true});
+  const ver=($('#projectCard .micro:not(#storageInfo)')||{}).textContent||'';
+  log(null,`App: ${ver.trim()} · ${/iPhone|iPad/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':'Otro'} · ${(navigator.userAgent.match(/(CriOS|Chrome|Version|Firefox|SamsungBrowser)\/[\d.]+/)||[''])[0]}${/Safari/.test(navigator.userAgent)&&!/Chrome|CriOS/.test(navigator.userAgent)?' Safari':''}`);
+  log(navigator.onLine,`Internet: ${navigator.onLine?'sí':'NO'}`);
+  log(null,`Aislamiento (hilos): ${self.crossOriginIsolated?'sí':'no (normal)'} · núcleos: ${navigator.hardwareConcurrency||'?'}`);
+  let opfs=false;try{const d=await navigator.storage.getDirectory();await d.getDirectoryHandle('piper',{create:true});opfs=true}catch(e){log(false,'Almacenamiento privado (OPFS): '+e.message)}
+  if(opfs)log(true,`Almacenamiento privado (OPFS) · createWritable: ${FileSystemFileHandle.prototype.createWritable&&FileSystemFileHandle.prototype.createWritable.toString().includes('resolve')?'reemplazo para Safari':'nativo'}`);
+  try{const e=await navigator.storage.estimate();log(null,`Espacio: ${mbs(e.usage||0)} usados de ${mbs(e.quota||0)}`)}catch{}
+  if(!alive)return;
+  let tts=null;
+  for(let i=0;i<TTS_URLS.length&&!tts;i++){const t0=performance.now();log(null,`Cargando motor de voz (${i?'esm.sh':'jsdelivr'})…`);
+    try{tts=await withTimeout(import(TTS_URLS[i]),30000);upd('');lines.pop();log(true,`Motor de voz cargado desde ${i?'esm.sh':'jsdelivr'} (${Math.round(performance.now()-t0)} ms)`)}catch(e){lines.pop();log(false,`Motor desde ${i?'esm.sh':'jsdelivr'}: ${e.message}`)}}
+  if(!tts||!alive)return;
+  let voices={};try{voices=await withTimeout(tts.voices(),30000);allVoiceKeys=Object.keys(voices||{});log(true,`Lista de voces: ${allVoiceKeys.length} voces`)}catch(e){log(false,'Lista de voces: '+e.message)}
+  const id=voiceFor('es');log(null,`Voz elegida: ${id}${allVoiceKeys.length&&!allVoiceKeys.includes(id)?' (⚠ no está en la lista)':''}`);
+  let stored=[];try{stored=await tts.stored();log(true,`Voces ya descargadas: ${stored.length?stored.join(', '):'ninguna'}`)}catch(e){log(false,'Voces descargadas: '+e.message)}
+  if(!alive)return;
+  if(!stored.includes(id)){log(null,'Descargando la voz… 0%');
+    try{await tts.download(id,p=>{if(p&&p.total)upd(`Descargando la voz… ${Math.round(p.loaded*100/p.total)}% (${mbs(p.loaded)} de ${mbs(p.total)})`)});lines.pop();log(true,'Voz descargada y guardada')}
+    catch(e){lines.pop();log(false,'Descarga de la voz: '+(e&&e.message||e));return}}
+  if(!alive)return;
+  log(null,'Creando una voz de prueba…');const t0=performance.now();
+  try{const wav=await withTimeout(tts.predict({text:'Hola, esta es una prueba de la voz.',voiceId:id}),120000);lines.pop();
+    if(!wav||!wav.size)throw new Error('la voz salió vacía');
+    let dur=0;try{dur=(await decodeBuf(getDecodeCtx(),wav)).duration}catch{}
+    log(true,`Voz creada: ${mbs(wav.size)}, ${dur?dur.toFixed(1)+' s':'duración ?'} en ${((performance.now()-t0)/1000).toFixed(1)} s`);
+    log(null,'Todo funciona. Si en una escena no sale, revisa que tenga texto escrito.');
+    const u=URL.createObjectURL(wav),b=$('#dgPlay');if(b){b.classList.remove('hidden');b.onclick=()=>{const a=new Audio(u);a.play().catch(()=>toast('Toca de nuevo para escuchar.'))}}
+  }catch(e){lines.pop();log(false,'Crear la voz: '+(e&&e.message||e)+(e&&e.stack?'\n   '+String(e.stack).split('\n').slice(0,2).join('\n   '):''))}
+};
 $('#allLangBtn').onclick=()=>openLangBoard(null);
 $('#ttsVoice').onchange=e=>{settings.ttsVoice=e.target.value;try{localStorage.setItem('ttsVoice',settings.ttsVoice)}catch{}};
 $('#ttsAll').onclick=async()=>{
