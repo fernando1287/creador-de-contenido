@@ -254,7 +254,8 @@ a.smallbtn{color:inherit;text-decoration:none}
         <h3>Mi proyecto <span id="saveState"></span></h3>
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 11 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 12 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -275,6 +276,16 @@ a.smallbtn{color:inherit;text-decoration:none}
    <div class="cut-grid" id="cutGrid"></div>
   </div>
   <div class="cut-foot"><button class="smallbtn" id="cutAll">✓ Todas</button><button class="smallbtn" id="cutNone">Ninguna</button><span class="micro" id="cutCount"></span><button class="btn primary" id="cutAdd" disabled>Agregar partes</button></div>
+ </div>
+</div>
+<div class="cut hidden" id="opt" role="dialog" aria-label="Optimizar video">
+ <div class="cut-box" style="max-width:460px;margin-top:12vh">
+  <div class="cut-head"><b id="optTitle">⚡ Video pesado</b></div>
+  <p id="optText" style="font-size:14px;margin:0;color:#c5d0dc"></p>
+  <div class="progress hidden" id="optBarW"><i id="optBar"></i></div>
+  <div class="okmsg" id="optStatus"></div>
+  <div class="fx-actions" id="optBtns"><button class="btn primary" id="optGo">⚡ Optimizar</button><button class="btn" id="optKeep">Usar así</button></div>
+  <div class="fx-actions hidden" id="optRun"><button class="smallbtn" id="optCancel">Cancelar</button></div>
  </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -316,6 +327,7 @@ function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
+  else if(file.size>OPT_BYTES)file=await offerOptimize(file);
   revoke(s.mediaUrl);s.mediaBlob=file;s.mediaUrl=URL.createObjectURL(file);s.mediaName=file.name||'';s.kind=isVideoFile(file)?'video':'image';s.mediaDur=0;s.clipStart=0;s.clip=false;
   if(s.kind==='video'){const d=await videoMeta(s.mediaUrl);if(d&&isFinite(d)){s.mediaDur=d;s.duration=clampDur(Math.max(d,s.audioDur||0))}}
   selectedId=s.id;
@@ -362,7 +374,7 @@ function draw(){
   if(!scenes.length){root.innerHTML='<div class="empty-list">No hay escenas. Toca <b>＋ Agregar escena</b> o <b>Cargar varias</b>.</div>'}
   scenes.forEach((s,i)=>{
     const el=document.createElement('article');el.className='scene'+(s.id===selectedId?' sel':'');el.dataset.id=s.id;
-    const thumb=s.kind==='image'?`<img src="${s.mediaUrl}" alt="">`:s.kind==='video'?`<video src="${s.mediaUrl}#t=${((s.clipStart||0)+0.1).toFixed(2)}" muted playsinline preload="metadata"></video><span class="vid">${s.clip?`✂️ ${fmtD(s.clipStart)}–${fmtD(s.clipStart+s.mediaDur)}`:'🎬 '+(s.mediaDur?fmtS(s.mediaDur):'Video')}</span>`:'';
+    const thumb=s.kind==='image'?`<img src="${s.mediaUrl}" alt="">`:s.kind==='video'?`<video src="${s.mediaUrl}#t=${((s.clipStart||0)+0.1).toFixed(2)}" muted playsinline preload="metadata"></video><span class="vid">${s.clip?`✂️ ${fmtD(s.clipStart)}–${fmtD(s.clipStart+s.mediaDur)}`:'🎬 '+(s.mediaDur?fmtS(s.mediaDur):'Video')}${s.mediaBlob&&s.mediaBlob.size>OPT_BYTES?' · ⚠ '+mbs(s.mediaBlob.size):''}</span>`:'';
     const fitTarget=Math.max(s.audioDur||0,s.kind==='video'?s.mediaDur||0:0);
     el.innerHTML=`<div class="scene-head"><div class="scene-label"><span class="num">${String(i+1).padStart(2,'0')}</span>Escena ${i+1}${s.kind?`<span class="badge">${s.kind==='video'?'🎬 Video':'📷 Foto'}</span>`:''}</div>
 <div class="scene-tools"><button class="iconbtn up" title="Subir escena">↑</button><button class="iconbtn down" title="Bajar escena">↓</button><button class="iconbtn dup" title="Duplicar escena">⧉</button><button class="iconbtn delete" title="Eliminar escena">✕</button></div></div>
@@ -740,15 +752,18 @@ async function runTimeline(record){
     const out=ac.createGain();let dest=null;
     if(record){dest=ac.createMediaStreamDestination();out.connect(dest)}else out.connect(ac.destination);
     const [W,H]=setCanvasSize();
+    // las voces se preparan antes; las fotos y videos se cargan de uno en uno (la escena actual y la siguiente)
     const items=[];
     for(let i=0;i<list.length&&!run.stop;i++){
-      const s=list[i];setStatus(`Cargando escena ${i+1} de ${list.length}…`);
-      let m=null,nb=null;
-      try{m=s.kind==='image'?await loadImg(s.mediaUrl):await loadVideo(s.mediaUrl)}catch{m=null;toast(`No se pudo leer el archivo de la escena ${i+1}.`)}
-      if(m&&s.kind==='video'){videos.push(m);if(s.videoAudio){try{ac.createMediaElementSource(m).connect(out)}catch(e){console.warn(e)}}}
-      if(s.audioBlob){try{nb=await getVoiceBuffer(s)}catch(e){console.warn('audio',e);toast(`No se pudo leer el audio de la escena ${i+1}.`)}}
-      items.push({s,m,nb});
+      const s=list[i];let nb=null;
+      if(s.audioBlob){setStatus(`Preparando voces… ${i+1} de ${list.length}`);try{nb=await getVoiceBuffer(s)}catch(e){console.warn('audio',e);toast(`No se pudo leer el audio de la escena ${i+1}.`)}}
+      items.push({s,m:null,nb,p:null});
     }
+    const loadItem=i=>{const it=items[i];if(!it)return Promise.resolve();if(it.p)return it.p;
+      it.p=(async()=>{const s=it.s;try{it.m=s.kind==='image'?await loadImg(s.mediaUrl):await loadVideo(s.mediaUrl)}catch{it.m=null;toast(`No se pudo leer el archivo de la escena ${i+1}.`)}
+        if(it.m&&s.kind==='video'){videos.push(it.m);if(s.videoAudio){try{ac.createMediaElementSource(it.m).connect(out)}catch(e){console.warn(e)}}await seekTo(it.m,s.clipStart||0)}})();
+      return it.p};
+    setStatus('Cargando la primera escena…');await loadItem(0);
     const mBufs=new Map();for(const it of items){if(run.stop)break;const sm=sceneMusic(it.s);it.sm=sm;if(sm&&!mBufs.has(sm.key)){setStatus('Preparando música…');try{mBufs.set(sm.key,await trackBuffer(sm,ac))}catch(e){console.warn(e);mBufs.set(sm.key,null);toast('No se pudo preparar una de las músicas.')}}}
     if(run.stop)throw'stop';
     const total=items.reduce((a,x)=>a+x.s.duration,0);
@@ -770,21 +785,21 @@ async function runTimeline(record){
     setStatus(record?'Creando video… 0%':'');
     let passed=0;
     for(let i=0;i<items.length&&!run.stop;i++){
-      const {s,m,nb}=items[i];let ns=null;musSwitch(items[i],i===items.length-1);
+      await loadItem(i);const {s,m,nb}=items[i];let ns=null;loadItem(i+1);musSwitch(items[i],i===items.length-1);
       if(m&&s.kind==='video'){m.muted=!s.videoAudio;const r=videoRate(s);try{m.preservesPitch=true;m.defaultPlaybackRate=r;m.playbackRate=r}catch{}await seekTo(m,s.clipStart||0);try{await m.play()}catch{m.muted=true;try{await m.play()}catch{}}}
       if(nb){ns=ac.createBufferSource();ns.buffer=nb;ns.connect(out);ns.start();if(mus)mus.g.gain.setTargetAtTime(mus.vol*0.4,ac.currentTime,0.15)}
       const t0=performance.now(),dur=s.duration;
       const clipEnd=(s.clipStart||0)+(s.mediaDur||1e9);
       while(!run.stop){const t=(performance.now()-t0)/1000;if(t>=dur)break;if(m&&s.kind==='video'&&!m.paused&&m.currentTime>=clipEnd-0.03)m.pause();drawScene(ctx,W,H,s,m,t,{index:i});progress((passed+t)/total,passed+t,total,record);await sleep(1000/30)}
       if(ns){try{ns.stop()}catch{}if(mus&&i<items.length-1)mus.g.gain.setTargetAtTime(mus.vol,ac.currentTime,0.3)}
-      if(m&&s.kind==='video')m.pause();
+      if(m&&s.kind==='video'){m.pause();freeVideo(m);items[i].m=null}
       passed+=dur;
     }
     if(mus)try{mus.src.stop()}catch{}
     if(rec){await sleep(120);rec.stop();await done;
       if(!run.stop)finishExport(parts,mime||rec.mimeType||'video/webm',total);else setStatus('Exportación cancelada.')}
     else setStatus('');
-  }catch(e){if(e!=='stop'){console.error(e);setStatus(record?'No se pudo exportar. Prueba con archivos más ligeros o con Chrome/Safari actualizado.':'No se pudo reproducir la vista previa.')}else setStatus('')}
+  }catch(e){if(e!=='stop'){console.error(e);setStatus(record?'No se pudo exportar. Si tienes videos muy pesados, usa “⚡ Optimizar videos pesados” en Mi proyecto y vuelve a intentar.':'No se pudo reproducir la vista previa.')}else setStatus('')}
   finally{
     if(stream)stream.getTracks().forEach(t=>t.stop());videos.forEach(freeVideo);
     try{await ac.close()}catch{}try{wake&&wake.release()}catch{}
@@ -850,9 +865,9 @@ async function autosave(){
   const need=new Map();const addB=b=>{if(b)need.set(bid(b),b)};addB(settings.musicBlob);scenes.forEach(x=>{addB(x.mediaBlob);addB(x.audioBlob);addB(x.musicBlob)});
   try{
     await tx('readwrite',st=>{for(const [k,b] of need)if(!savedKeys.has(k))st.put(b,k);for(const k of savedKeys)if(!need.has(k))st.delete(k);return st.put(meta,'project')});
-    savedKeys=new Set(need.keys());lastSig=sig;$('#saveState').textContent='Guardado ✓';
-  }catch(e){console.warn(e);$('#saveState').textContent='No se pudo guardar';if(!quotaWarned){quotaWarned=true;toast('El teléfono no tiene espacio para guardar el proyecto completo.',5000)}}
-  finally{saving=false}
+    savedKeys=new Set(need.keys());lastSig=sig;quotaWarned=false;$('#saveState').textContent='Guardado ✓';
+  }catch(e){console.warn(e);$('#saveState').textContent='No se pudo guardar';if(!quotaWarned){quotaWarned=true;toast('El proyecto ya no cabe en el espacio de la app. Toca “⚡ Optimizar videos pesados” en Mi proyecto. Tu trabajo sigue aquí mientras no cierres la app.',7000)}}
+  finally{saving=false;updateStorageInfo()}
 }
 setInterval(autosave,2000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)autosave()});
@@ -1093,6 +1108,75 @@ $('#useScript').onclick=()=>{
 };
 initPortalUI();
 $('#updBtn').onclick=e=>window.checkUpdate&&window.checkUpdate(e.target);
+/* ---------- optimizar videos pesados ---------- */
+const OPT_BYTES=50*1048576;
+const mbs=b=>b>=1073741824?(b/1073741824).toFixed(1)+' GB':Math.round(b/1048576)+' MB';
+const optState={resolve:null,cancel:false,ac:null};
+function askOptimize(title,text,goLbl,keepLbl){
+  return new Promise(res=>{optState.resolve=res;optState.cancel=false;$('#optTitle').textContent=title;$('#optText').textContent=text;$('#optGo').textContent=goLbl||'⚡ Optimizar';$('#optKeep').textContent=keepLbl||'Usar así';
+    $('#optBtns').classList.remove('hidden');$('#optRun').classList.add('hidden');$('#optBarW').classList.add('hidden');$('#optStatus').textContent='';$('#opt').classList.remove('hidden')});
+}
+$('#optGo').onclick=()=>{if(!optState.ac||optState.ac.state==='closed'){optState.ac=new AC()}optState.ac.resume().catch(()=>{});$('#optBtns').classList.add('hidden');$('#optRun').classList.remove('hidden');$('#optBarW').classList.remove('hidden');const r=optState.resolve;optState.resolve=null;r&&r('go')};
+$('#optKeep').onclick=()=>{optClose();const r=optState.resolve;optState.resolve=null;r&&r('keep')};
+$('#optCancel').onclick=()=>{optState.cancel=true;$('#optStatus').textContent='Cancelando…'};
+function optProgress(t,f){$('#optStatus').textContent=t;$('#optBar').style.width=Math.round(Math.min(1,f)*100)+'%'}
+function optClose(){$('#opt').classList.add('hidden');$('#optBar').style.width='0%'}
+// vuelve a grabar el video (o un pedazo) en 720p: queda igual en el teléfono pero pesa mucho menos
+async function transcode(blob,start,end,onP){
+  const ac=optState.ac||(optState.ac=new AC());let url=URL.createObjectURL(blob),v=null,stream=null,wake=null,src=null;
+  try{
+    try{wake=await navigator.wakeLock?.request('screen')}catch{}
+    v=await loadVideo(url);const dur=v.duration;start=Math.max(0,start||0);end=Math.min(end??dur,dur);const len=Math.max(0.1,end-start);
+    const vw=v.videoWidth||1280,vh=v.videoHeight||720,k=Math.min(1,1280/Math.max(vw,vh)),W=Math.round(vw*k/2)*2,H=Math.round(vh*k/2)*2;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    const dest=ac.createMediaStreamDestination();try{src=ac.createMediaElementSource(v);src.connect(dest)}catch(e){console.warn(e)}
+    stream=c.captureStream(30);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+    const mime=MIMES.find(t=>{try{return MediaRecorder.isTypeSupported(t)}catch{return false}})||'';
+    const opt={videoBitsPerSecond:3500000,audioBitsPerSecond:128000};if(mime)opt.mimeType=mime;
+    const rec=new MediaRecorder(stream,opt),parts=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data)};
+    const done=new Promise((res,rej)=>{rec.onstop=res;rec.onerror=e=>rej(e.error||e)});
+    await seekTo(v,start);x.drawImage(v,0,0,W,H);await ac.resume().catch(()=>{});
+    rec.start(500);v.muted=false;try{await v.play()}catch{v.muted=true;try{await v.play()}catch{}}
+    let last=-1,stuck=performance.now();
+    while(!optState.cancel){
+      if(v.ended||v.currentTime>=end-0.02)break;
+      x.drawImage(v,0,0,W,H);onP&&onP((v.currentTime-start)/len);
+      if(v.currentTime!==last){last=v.currentTime;stuck=performance.now()}else if(performance.now()-stuck>6000){if(v.paused)try{await v.play()}catch{}if(performance.now()-stuck>12000)throw new Error('el video se detuvo')}
+      await sleep(1000/30);
+    }
+    v.pause();x.drawImage(v,0,0,W,H);await sleep(80);rec.stop();await done;
+    if(optState.cancel)return null;
+    const type=((mime||rec.mimeType||'video/webm').split(';')[0])||'video/webm',ext=type.includes('mp4')?'mp4':'webm';
+    const base=(blob.name||'video').replace(/\.\w+$/,'');
+    return new File(parts,`${base}${start>0.05||end<dur-0.05?` ${fmtD(start).replace(':','m')}-${fmtD(end).replace(':','m')}`:''} (ligero).${ext}`,{type});
+  }catch(e){console.error(e);return null}
+  finally{try{src&&src.disconnect()}catch{}if(stream)stream.getTracks().forEach(t=>t.stop());if(v)freeVideo(v);revoke(url);try{wake&&wake.release()}catch{}}
+}
+async function offerOptimize(file){
+  const u=URL.createObjectURL(file),d=await videoMeta(u);revoke(u);
+  const ans=await askOptimize('⚡ Video pesado',`Este video pesa ${mbs(file.size)}${d?` y dura ${fmt(d)}`:''}. Puedo hacerlo más ligero (720p): se ve igual en el celular, pesa mucho menos y no se llena la app. Tarda ${d?'unos '+fmt(Math.ceil(d)):'lo que dura el video'}. Mantén la pantalla encendida.`);
+  if(ans!=='go')return file;
+  const nf=await transcode(file,0,null,x=>optProgress(`Optimizando… ${Math.round(x*100)}%`,x));optClose();
+  if(!nf){if(!optState.cancel)toast('No se pudo optimizar. Usaré el video original.');return file}
+  toast(`Listo: de ${mbs(file.size)} a ${mbs(nf.size)}.`,4000);return nf;
+}
+$('#optAll').onclick=async()=>{
+  if(engine)return;const heavy=scenes.filter(x=>x.kind==='video'&&x.mediaBlob&&x.mediaBlob.size>OPT_BYTES);
+  if(!heavy.length){toast('No hay videos pesados.');updateStorageInfo();return}
+  const secs=heavy.reduce((a,x)=>a+(x.mediaDur||0),0),orig=new Set(heavy.map(x=>x.mediaBlob)),before=[...orig].reduce((a,b)=>a+b.size,0);
+  const ans=await askOptimize('⚡ Optimizar videos pesados',`Hay ${heavy.length} escena${heavy.length>1?'s':''} con videos pesados (${mbs(before)} en total). Voy a convertir solo la parte que usa cada escena a 720p. Tarda unos ${fmt(Math.ceil(secs))}. Mantén la pantalla encendida.`,'⚡ Optimizar','Ahora no');
+  if(ans!=='go')return;let ok=0;
+  for(let i=0;i<heavy.length;i++){const x=heavy[i],a=x.clipStart||0,b=x.mediaDur?a+x.mediaDur:null;
+    const nf=await transcode(x.mediaBlob,a,b,f=>optProgress(`Escena ${scenes.indexOf(x)+1}: optimizando… ${Math.round(f*100)}%  (${i+1} de ${heavy.length})`,(i+f)/heavy.length));
+    if(!nf)break;revoke(x.mediaUrl);x.mediaBlob=nf;x.mediaUrl=URL.createObjectURL(nf);x.mediaName=nf.name;x.clipStart=0;x.clip=false;ok++}
+  optClose();draw();if(ok)toast(`Listo: ${ok} escena${ok>1?'s':''} optimizada${ok>1?'s':''}.`,4000);else if(!optState.cancel)toast('No se pudo optimizar.');
+  setTimeout(updateStorageInfo,3000);
+};
+async function updateStorageInfo(){
+  const heavy=scenes.some(x=>x.kind==='video'&&x.mediaBlob&&x.mediaBlob.size>OPT_BYTES);$('#optAll').classList.toggle('hidden',!heavy);
+  try{const e=await navigator.storage.estimate();$('#storageInfo').textContent=`Espacio usado: ${mbs(e.usage||0)} de ${mbs(e.quota||0)}`}catch{}
+}
+
 /* ---------- cortador de video ---------- */
 function seekTo(v,t){return new Promise(res=>{let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener('seeked',fin);res()};v.addEventListener('seeked',fin);try{v.currentTime=Math.max(0,t)}catch{fin()}setTimeout(fin,3000)})}
 const cut={file:null,url:'',dur:0,pieces:[],token:0,mode:'scene',target:null,av:null,markIn:null,stopAt:null};
@@ -1163,9 +1247,19 @@ $('#cutIn').onclick=()=>{if(!cut.dur)return;cut.markIn=+cv.currentTime.toFixed(2
 $('#cutOut').onclick=()=>{if(!cut.dur)return;const end=+cv.currentTime.toFixed(2);if(cut.markIn==null)return toast('Primero toca “Inicio aquí”.');if(end-cut.markIn<0.5)return toast('El fin debe ir después del inicio.');
   const p={start:cut.markIn,end,sel:true,thumb:''};let i=cut.pieces.findIndex(x=>x.start>p.start);if(i<0)i=cut.pieces.length;cut.pieces.splice(i,0,p);cut.markIn=null;cv.pause();
   $('#cutMarkInfo').textContent=`Parte agregada: ${fmtD(p.start)}–${fmtD(p.end)}.`;drawPieces();makeThumbs(cut.token)};
-$('#cutAdd').onclick=()=>{
+$('#cutAdd').onclick=async()=>{
   const sel=cut.pieces.filter(p=>p.sel);if(!sel.length)return;const f=cut.file;
-  const news=sel.map(p=>makeScene({kind:'video',mediaBlob:f,mediaName:f.name||'video',mediaDur:+(p.end-p.start).toFixed(2),clipStart:p.start,clip:true,duration:clampDur(p.end-p.start),videoAudio:true,speedFit:true}));
+  let news=null;
+  if(f.size>OPT_BYTES){
+    const secs=sel.reduce((a,p)=>a+p.end-p.start,0);cv.pause();
+    const ans=await askOptimize('⚡ Video pesado',`Este video pesa ${mbs(f.size)}. Puedo convertir solo las ${sel.length} parte${sel.length>1?'s':''} que elegiste en archivos ligeros, así no se guarda el video completo. Tarda unos ${fmtS(Math.ceil(secs))} (lo que duran las partes). Mantén la pantalla encendida.`,'⚡ Convertir partes','Usar el video completo');
+    if(ans==='go'){const out=[];
+      for(let i=0;i<sel.length;i++){const p=sel[i];optProgress(`Convirtiendo parte ${i+1} de ${sel.length}…`,0);
+        const nf=await transcode(f,p.start,p.end,x=>optProgress(`Convirtiendo parte ${i+1} de ${sel.length}… ${Math.round(x*100)}%`,(i+x)/sel.length));
+        if(!nf){break}out.push(makeScene({kind:'video',mediaBlob:nf,mediaName:nf.name,mediaDur:+(p.end-p.start).toFixed(2),clipStart:0,clip:false,duration:clampDur(p.end-p.start),videoAudio:true,speedFit:true}))}
+      optClose();if(out.length===sel.length)news=out;else{out.forEach(x=>revoke(x.mediaUrl));if(optState.cancel)return;toast('No se pudo convertir. Usaré el video completo.')}}
+  }
+  if(!news)news=sel.map(p=>makeScene({kind:'video',mediaBlob:f,mediaName:f.name||'video',mediaDur:+(p.end-p.start).toFixed(2),clipStart:p.start,clip:true,duration:clampDur(p.end-p.start),videoAudio:true,speedFit:true}));
   let at=cut.target!=null?scenes.findIndex(x=>x.id===cut.target):-1;
   if(at>=0){const old=scenes[at];news[0].text=old.text;news[0].textPos=old.textPos;scenes.splice(at,1,...news)}
   else{const empty=scenes.length===1&&!scenes[0].kind&&!scenes[0].text&&!scenes[0].audioUrl;if(empty)scenes.splice(0,1,...news);else scenes.push(...news)}
@@ -1202,7 +1296,7 @@ ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userCho
 
 
 syncSettingsUI();
-(async()=>{const ok=await restore();syncSettingsUI();if(ok){draw();toast('Tu proyecto sigue aquí.')}else add({})})();
+(async()=>{const ok=await restore();syncSettingsUI();setTimeout(updateStorageInfo,1500);if(ok){draw();toast('Tu proyecto sigue aquí.')}else add({})})();
 })();
 </script>
 </body>
