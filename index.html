@@ -165,6 +165,10 @@ a.smallbtn{color:inherit;text-decoration:none}
     </div>
   </header>
 
+  <section class="portal-bar hidden" id="importBar" style="border-color:#a8743d;background:linear-gradient(120deg,#2a1f14,#151c25)">
+    <div class="pt"><b>¿Vienes de la app anterior del Creador?</b>Abre aquí la copia de tu proyecto que guardaste.</div>
+    <div class="acts"><button class="smallbtn" id="importGo" style="background:var(--grad);border:0;color:#fff;font-weight:700">📂 Abrir la copia</button><button class="smallbtn" id="importNo">✕</button></div>
+  </section>
   <section class="portal-bar hidden" id="portalBar">
     <div class="pt" id="portalTxt"></div>
     <div class="acts"><button class="smallbtn hidden" id="useScript">📝 Usar el guion del tema</button><a class="smallbtn" id="backPortal" href="../">← Volver al portal</a></div>
@@ -255,7 +259,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 12 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 13 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -286,6 +290,16 @@ a.smallbtn{color:inherit;text-decoration:none}
   <div class="okmsg" id="optStatus"></div>
   <div class="fx-actions" id="optBtns"><button class="btn primary" id="optGo">⚡ Optimizar</button><button class="btn" id="optKeep">Usar así</button></div>
   <div class="fx-actions hidden" id="optRun"><button class="smallbtn" id="optCancel">Cancelar</button></div>
+ </div>
+</div>
+<div class="cut hidden" id="moveBox" role="dialog" aria-label="Pasar al Portal">
+ <div class="cut-box" style="max-width:480px;margin-top:8vh">
+  <div class="cut-head"><b>📺 Tu Creador ahora vive en el Portal</b></div>
+  <p style="font-size:14px;margin:0;color:#c5d0dc">Para que sea una sola app y tus videos se guarden en tus canales, el Creador ahora está dentro de tu <b>Portal de Canales</b>. Pasa tu proyecto en 2 pasos:</p>
+  <button class="btn primary" id="moveSave" style="justify-content:center">1️⃣ Guardar mi proyecto para pasarlo</button>
+  <a class="btn" id="moveOpen" style="justify-content:center;text-decoration:none;color:inherit" target="_blank" rel="noopener">2️⃣ Abrir el Creador del Portal</a>
+  <p class="micro" style="margin:0">En el Creador del Portal toca <b>“📂 Abrir la copia”</b> y elige el archivo que guardaste (está en Descargas). Después instala esa app desde ahí y borra esta del teléfono.</p>
+  <button class="smallbtn" id="moveLater" style="justify-self:start">Seguir aquí por ahora</button>
  </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -922,7 +936,7 @@ $('#projectFile').onchange=async e=>{
       if(x.audio)d.audioBlob=dataToBlob(x.audio);else{d.audioName='';d.audioDur=0}
       scenes.push(makeScene(d));
     }
-    if(!scenes.length)add({});selectedId=scenes[0]?.id||null;syncSettingsUI();draw();toast('Copia abierta.');
+    if(!scenes.length)add({});selectedId=scenes[0]?.id||null;syncSettingsUI();draw();toast('Copia abierta. ¡Tu proyecto ya está en el Portal!',4500);$('#importBar').classList.add('hidden');
   }catch(err){console.error(err);toast('Ese archivo no es una copia de este proyecto.')}
 };
 
@@ -1036,6 +1050,7 @@ async function playMusicPreview(sc){
 }
 /* ---------- conexión con el Portal Madre de Canales ---------- */
 const PORTAL_URL='https://portal-madre-de-canales.fernandobejarano1287.workers.dev/';
+const onGithub=/github\.io$/i.test(location.hostname);
 const MESES='Enero Febrero Marzo Abril Mayo Junio Julio Agosto Septiembre Octubre Noviembre Diciembre'.split(' '),DIAS=[31,28,31,30,31,30,31,31,30,31,30,31];
 const lsJSON=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 const portalChannels=lsJSON('portal-canales',null);
@@ -1266,6 +1281,10 @@ $('#cutAdd').onclick=async()=>{
   selectedId=news[0].id;closeCutter();draw();toast(`Listo: ${news.length} parte${news.length>1?'s':''} agregada${news.length>1?'s':''} como escenas.`);
   setTimeout(()=>{const el=root.querySelector(`[data-id="${news[0].id}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},200);
 };
+$('#moveSave').onclick=()=>{$('#saveProject').click();$('#moveSave').textContent='✓ Guardando… revisa tus descargas';$('#moveOpen').classList.add('primary')};
+$('#moveLater').onclick=()=>$('#moveBox').classList.add('hidden');
+$('#importGo').onclick=()=>$('#projectFile').click();
+$('#importNo').onclick=()=>$('#importBar').classList.add('hidden');
 $('#makeVideoTop').onclick=()=>{$('#exportBtn').scrollIntoView({behavior:'smooth',block:'center'});if(!engine)runTimeline(true)};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&engine&&engine.record)toast('Regresa a esta pestaña: el video se crea solo mientras está visible.',5000)});
@@ -1275,9 +1294,9 @@ window.addEventListener('beforeunload',e=>{if(lastSig!==JSON.stringify(projectMe
 let installEvt=null;const ib=$('#installBtn');
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone&&!inPortal)ib.classList.remove('hidden')});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone&&!onGithub)ib.classList.remove('hidden')});
 window.addEventListener('appinstalled',()=>{ib.classList.add('hidden');toast('¡App instalada! Búscala en tu pantalla de inicio.')});
-if(isIOS&&!standalone&&!inPortal)ib.classList.remove('hidden');
+if(isIOS&&!standalone&&!onGithub)ib.classList.remove('hidden');
 ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.classList.add('hidden')}else if(isIOS)toast('En Safari toca Compartir ⬆️ y luego “Agregar a inicio”.',6000);else toast('Abre el menú del navegador ⋮ y elige “Instalar app”.',6000)};
 
 /* ---------- actualizaciones automáticas ---------- */
@@ -1296,7 +1315,13 @@ ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userCho
 
 
 syncSettingsUI();
-(async()=>{const ok=await restore();syncSettingsUI();setTimeout(updateStorageInfo,1500);if(ok){draw();toast('Tu proyecto sigue aquí.')}else add({})})();
+(async()=>{const ok=await restore();syncSettingsUI();setTimeout(updateStorageInfo,1500);
+  if(onGithub){const has=ok&&scenes.some(x=>x.kind||x.text||x.audioBlob);
+    if(!has){location.replace(PORTAL_URL+'creador/');return}
+    $('#moveOpen').href=PORTAL_URL+'creador/?importar=1';$('#moveBox').classList.remove('hidden');}
+  if(ok){draw();if(!onGithub)toast('Tu proyecto sigue aquí.')}else add({});
+  if(inPortal&&urlQ.has('importar'))$('#importBar').classList.remove('hidden');
+})();
 })();
 </script>
 </body>
