@@ -176,7 +176,7 @@ a.smallbtn{color:inherit;text-decoration:none}
   <header class="top">
     <div class="brand"><div class="logo">▶</div><div><h1>Creador de Contenido</h1><p>Une fotos, videos, texto y voz en un solo video para redes</p></div></div>
     <div class="top-actions">
-      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn" id="hdArchive">🗄 Archivar</button><button class="btn" id="hdNew">➕ Nuevo</button><button class="btn" id="hdProjects">📁 Proyectos<span id="projCount"></span></button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
+      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn" id="hdArchive">🗄 Archivar</button><button class="btn" id="hdNew">➕ Nuevo</button><button class="btn" id="hdImport">🤖 Importar</button><button class="btn" id="hdProjects">📁 Proyectos<span id="projCount"></span></button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
     </div>
   </header>
 
@@ -272,9 +272,9 @@ a.smallbtn{color:inherit;text-decoration:none}
       <div class="card" id="projectCard">
         <h3>Mi proyecto <span id="saveState"></span></h3>
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
-        <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
+        <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 17 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 18 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -1086,7 +1086,7 @@ function projList(filter){
   $('#pbBody').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openArchive(b.dataset.open));
   $('#pbBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteArchive(b.dataset.del));
 }
-$('#hdArchive').onclick=()=>projArchive(false);$('#hdNew').onclick=projNew;$('#hdProjects').onclick=()=>projList('all');
+$('#hdImport').onclick=openImport;$('#importProject').onclick=openImport;$('#hdArchive').onclick=()=>projArchive(false);$('#hdNew').onclick=projNew;$('#hdProjects').onclick=()=>projList('all');
 
 /* ---------- copia de seguridad (archivo) ---------- */
 $('#saveProject').onclick=async()=>{
@@ -1106,8 +1106,13 @@ $('#saveProject').onclick=async()=>{
 $('#loadProject').onclick=()=>$('#projectFile').click();
 $('#projectFile').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
+  let data;try{data=JSON.parse(await f.text())}catch(err){return toast('Ese archivo no es una copia de este proyecto.')}
+  if(isAiProject(data))return importAiProject(data,{voices:true});
+  loadBackup(data);
+};
+async function loadBackup(data){
   try{
-    const data=JSON.parse(await f.text());if(!Array.isArray(data.scenes))throw 0;
+    if(!Array.isArray(data.scenes))throw 0;
     if(scenes.some(x=>x.kind||x.text)&&!confirm('¿Reemplazar el proyecto actual por la copia?'))return;
     scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];
     const st=data.settings||{};
@@ -1123,7 +1128,73 @@ $('#projectFile').onchange=async e=>{
     }
     if(!scenes.length)add({});selectedId=scenes[0]?.id||null;syncSettingsUI();draw();toast('Copia abierta. ¡Tu proyecto ya está en el Portal!',4500);$('#importBar').classList.add('hidden');
   }catch(err){console.error(err);toast('Ese archivo no es una copia de este proyecto.')}
-};
+}
+
+/* ---------- importar proyecto hecho por Claude (u otra IA) ---------- */
+// Formato: {"app":"creador-de-contenido","tipo":"proyecto","titulo":"…","formato":"9:16","musica":"misterio",
+//   "volumenMusica":0.25,"voz":true,"efectoVoz":"locutor","escenas":[{"texto":"…","duracion":6,"imagen":"data:… o https://…","posicion":"bottom"}]}
+function isAiProject(d){return!!d&&typeof d==='object'&&(Array.isArray(d.escenas)||(d.tipo==='proyecto'&&Array.isArray(d.scenes)))}
+async function mediaFrom(src,name){
+  if(!src||typeof src!=='string')return null;
+  try{
+    let b;
+    if(src.startsWith('data:'))b=dataToBlob(src);
+    else{const r=await fetch(src,{mode:'cors'});if(!r.ok)throw new Error(r.status);b=await r.blob()}
+    const ext=(b.type.split('/')[1]||'bin').replace('jpeg','jpg');
+    return new File([b],(name||'escena')+'.'+ext,{type:b.type||'image/jpeg'});
+  }catch(e){console.warn('media',e);return null}
+}
+async function importAiProject(data,opt={}){
+  const list=(data.escenas||data.scenes||[]).filter(x=>x&&typeof x==='object');
+  if(!list.length)return toast('Ese proyecto no trae escenas.');
+  if(scenes.some(x=>x.kind||x.text||x.audioBlob)&&!confirm('¿Reemplazar el proyecto actual por el proyecto importado?\n\nConsejo: si quieres conservar el actual, primero toca 🗄 Archivar.'))return;
+  closeProj();stopVoice();stopMusicPreview();
+  scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];
+  const fmtKey=data.formato||data.format;if(FORMATS[fmtKey])settings.format=fmtKey;
+  const ts=data.tamanoTexto||data.textSize;if(ts)settings.textSize=+ts;
+  if('transiciones'in data)settings.transition=!!data.transiciones;if('movimiento'in data)settings.motion=!!data.movimiento;
+  const mus=data.musica||data.music;
+  if(mus&&TRACKS[mus]){settings.musicPreset=mus;settings.musicBlob=null;settings.musicName=''}
+  else if(typeof mus==='string'&&(mus.startsWith('data:')||/^https?:/.test(mus))){const b=await mediaFrom(mus,'musica');if(b){settings.musicBlob=b;settings.musicName=data.nombreMusica||'Música';settings.musicPreset='file'}}
+  else if(mus===''||mus===false){settings.musicPreset='';settings.musicBlob=null}
+  const vol=data.volumenMusica??data.musicVol;if(vol!=null&&isFinite(+vol))settings.musicVol=Math.max(0,Math.min(1,+vol));
+  const fxP=data.efectoVoz||data.voiceFx;
+  let missing=0;
+  for(let i=0;i<list.length;i++){
+    const x=list[i];setStatus(`Importando escena ${i+1} de ${list.length}…`);
+    const text=String(x.texto??x.text??'').replace(/\*/g,'');
+    const pos=({abajo:'bottom',centro:'center',arriba:'top'})[x.posicion]||x.posicion||x.textPos;
+    const s=makeScene({text,textPos:['bottom','center','top'].includes(pos)?pos:'bottom',fit:x.ajuste==='contain'||x.fit==='contain'?'contain':'cover',duration:+(x.duracion??x.duration)||5});
+    const fx=x.efectoVoz||fxP;if(fx&&PRESETS.some(p=>p[0]===fx)){const pr=PRESETS.find(p=>p[0]===fx)[2];s.fx={...s.fx,preset:fx,...pr}}
+    scenes.push(s);
+    const src=x.video||x.imagen||x.image||x.media;
+    if(src){const file=await mediaFrom(src,'escena'+(i+1));if(file){const dur=s.duration;await setMedia(s,file);if(s.kind==='image')s.duration=dur}else missing++}
+    const au=x.audio||x.vozArchivo;if(au){const b=await mediaFrom(au,'voz'+(i+1));if(b)await setAudio(s,b,x.nombreAudio||'Voz')}
+  }
+  selectedId=scenes[0]?.id||null;$('#result').classList.add('hidden');syncSettingsUI();draw();renderIdleSoon();setStatus('');
+  const title=data.titulo||data.title;
+  toast(`✓ Proyecto importado${title?': '+title:''} (${scenes.length} escenas)${missing?` · ${missing} imagen(es) no se pudieron cargar`:''}`,6000);
+  window.scrollTo({top:0,behavior:'smooth'});
+  const wantVoice=opt.voices!==false&&(data.voz===true||data.voice===true);
+  if(wantVoice&&scenes.some(x=>x.text.trim()&&!x.audioBlob)){await sleep(600);$('#ttsAll').click()}
+}
+function openImport(){
+  openProj('🤖 Importar proyecto',`<p class="micro" style="margin:0;font-size:13px">Abre el archivo <b>.json</b> que te preparó Claude (o una copia de seguridad). Se crean todas las escenas con sus imágenes, textos, tiempos y música.</p>
+   <label class="btn primary" style="justify-content:center">📂 Elegir archivo del proyecto<input type="file" id="impFile" accept="application/json,.json,text/plain,.txt" hidden></label>
+   <details><summary class="micro" style="cursor:pointer">…o pega el texto del proyecto</summary>
+    <textarea id="impText" placeholder='{"escenas":[{"texto":"Hola","duracion":5}]}' style="width:100%;min-height:140px;margin-top:8px"></textarea>
+    <button class="btn" id="impPaste" style="margin-top:8px">📋 Pegar del portapapeles</button> <button class="btn primary" id="impGo" style="margin-top:8px">Importar texto</button></details>
+   <label class="check"><input type="checkbox" id="impVoice" checked> Crear la voz de cada escena automáticamente (si el proyecto la pide)</label>
+   <div class="okmsg" id="impMsg"></div>`);
+  const run=async txt=>{let d;try{d=JSON.parse(String(txt).trim().replace(/^```(json)?|```$/g,''))}catch{$('#impMsg').textContent='Ese texto no es un proyecto válido.';return}
+    const v=$('#impVoice').checked;
+    if(isAiProject(d))return importAiProject(d,{voices:v});
+    if(Array.isArray(d.scenes)){closeProj();return loadBackup(d)}
+    $('#impMsg').textContent='No encontré escenas en ese archivo.'};
+  $('#impFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f){$('#impMsg').textContent='Leyendo…';run(await f.text())}};
+  $('#impGo').onclick=()=>run($('#impText').value);
+  $('#impPaste').onclick=async()=>{try{$('#impText').value=await navigator.clipboard.readText()}catch{toast('No pude leer el portapapeles; pega con el dedo (mantén presionado → Pegar).')}};
+}
 
 /* ---------- música incluida (se compone en el teléfono) ---------- */
 const TRACKS={
