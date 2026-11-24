@@ -150,6 +150,9 @@ a.smallbtn{color:inherit;text-decoration:none}
 .fx.mus summary span{color:#ffb86b}
 .nah{border:1px solid #6b4a2a;background:linear-gradient(120deg,#2a1f14,#10161e);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
 .nah .labelrow{color:#ffcf8a}
+.nah .src{font-size:12px;color:#c5d0dc;background:#10161e;border:1px dashed #6b4a2a;border-radius:9px;padding:8px 10px;max-height:90px;overflow:auto}
+.nah .steps{display:grid;gap:6px}.nah .steps .smallbtn{justify-content:flex-start;padding:9px 10px;font-size:13px}
+.nah .steps .go{background:var(--grad);border:0;color:#fff;font-weight:700}
 .smallbtn.nahon{background:#6b4a2a;border-color:#a8743d;color:#ffe2b8}
 .top-actions{flex-wrap:wrap;justify-content:flex-end}
 .pform{display:grid;gap:10px}
@@ -271,7 +274,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 16 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 17 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -456,7 +459,7 @@ function draw(){
     wireMus(s,el);
     q('.tts').onclick=()=>textToVoice(s);
     q('.nahBtn').onclick=()=>{s.voiceLang=s.voiceLang==='nah'?'':'nah';draw();if(s.voiceLang==='nah')setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t)t.focus()},50)};
-    if(q('.nahText')){q('.nahText').oninput=e=>{s.voiceText=e.target.value};q('.nahGo').onclick=()=>textToVoice(s);q('.nahOff').onclick=()=>{s.voiceLang='';draw()}}
+    if(q('.nahText')){q('.nahText').oninput=e=>{s.voiceText=e.target.value;s.nahWaiting=false};q('.nahGo').onclick=()=>textToVoice(s);q('.nahOff').onclick=()=>{s.voiceLang='';s.nahWaiting=false;draw()};q('.nahTr').onclick=()=>nahOpenGoogle(s);q('.nahPaste').onclick=()=>nahPaste(s)}
     q('.lang').onclick=()=>openLangBoard(s);
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
@@ -532,10 +535,31 @@ async function synth(text,onState,lang){
     ttsIdx=0;ttsPromise=null;throw e;
   }
 }
-function nahBox(s){return`<div class="nah"><div class="labelrow">🪶 LO QUE DICE LA VOZ EN NÁHUATL <span>el texto en pantalla sigue en español</span></div>
-<textarea class="nahText" placeholder="Ejemplo: Niltze! Nican tlamachiliztli de los mexicah…">${esc(s.voiceText)}</textarea>
-<div class="row" style="margin:0"><button class="smallbtn nahGo">🔊 Crear voz en náhuatl</button><button class="smallbtn nahOff">✕ Quitar náhuatl</button></div>
-<span class="micro">La voz automática lee el náhuatl con acento del español de México. Para que suene auténtico, graba a alguien que hable náhuatl con 🎙 Grabar voz. Puedes pedirle a Claude que te traduzca el texto.</span></div>`}
+function nahSource(s){return((s.lang==='es'?s.text:(s.textEs||s.text))||'').trim()}
+function nahBox(s){const src=nahSource(s);return`<div class="nah"><div class="labelrow">🪶 VOZ EN NÁHUATL <span>el texto en pantalla sigue en español</span></div>
+<div class="src">${src?esc(src):'<i>Primero escribe arriba el texto en español.</i>'}</div>
+<div class="steps">
+ <button class="smallbtn nahTr">1️⃣ 🌐 Traducir este texto en Google</button>
+ <button class="smallbtn nahPaste">2️⃣ 📋 Pegar la traducción aquí</button>
+</div>
+<textarea class="nahText" placeholder="Aquí queda el texto en náhuatl (lo que dirá la voz)…">${esc(s.voiceText)}</textarea>
+<div class="steps"><button class="smallbtn nahGo go">3️⃣ 🔊 Crear la voz en náhuatl</button></div>
+<div class="row" style="margin:0"><button class="smallbtn nahOff">✕ Quitar náhuatl</button></div>
+<span class="micro">Google traduce al náhuatl de la Huasteca. En Google toca el botón de copiar (⧉) y regresa aquí. La voz lee el náhuatl con acento de México; para que suene auténtico, graba a alguien que lo hable con 🎙 Grabar voz.</span></div>`}
+function nahOpenGoogle(s){
+  const src=nahSource(s);if(!src){toast('Primero escribe el texto en español de esta escena.');return false}
+  s.nahWaiting=true;
+  window.open(`https://translate.google.com/?sl=es&tl=nhe&op=translate&text=${encodeURIComponent(src)}`,'_blank','noopener');
+  return true;
+}
+async function nahPaste(s,silent){
+  let t='';try{t=(await navigator.clipboard.readText()||'').trim()}catch{}
+  const src=nahSource(s);
+  if(!t||t===src){if(!silent)toast('No encontré la traducción copiada. En Google toca copiar (⧉), o mantén presionado el cuadro café y elige “Pegar”.',6000);return false}
+  s.voiceText=t;s.nahWaiting=false;const ta=root.querySelector(`[data-id="${s.id}"] .nahText`);if(ta)ta.value=t;
+  toast('Listo, pegué la traducción. Ahora toca 3️⃣ Crear la voz.',4000);return true;
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;const s=scenes.find(x=>x.nahWaiting&&x.voiceLang==='nah');if(s)setTimeout(()=>nahPaste(s,true),400)});
 // Prepara la escritura del náhuatl para que la voz en español la pronuncie lo mejor posible
 function nahSpeech(t){
   const acc={a:'á',e:'é',i:'í',o:'ó',u:'ú'};
@@ -588,7 +612,7 @@ async function translate(text,from,to){
   return out.join('').replace(/ +\n/g,'\n').trim();
 }
 const LANGS=[
- {c:'es',f:'🇲🇽',n:'Español',sr:'es-MX',v:['es_MX','es_ES']},{c:'en',f:'🇺🇸',n:'Inglés',sr:'en-US',v:['en_US','en_GB']},{c:'nah',f:'🪶',n:'Náhuatl',note:'solo voz'},
+ {c:'es',f:'🇲🇽',n:'Español',sr:'es-MX',v:['es_MX','es_ES']},{c:'en',f:'🇺🇸',n:'Inglés',sr:'en-US',v:['en_US','en_GB']},{c:'nah',f:'🪶',n:'Náhuatl',note:'con Google'},
  {c:'pt',f:'🇧🇷',n:'Portugués',sr:'pt-BR',v:['pt_BR','pt_PT']},{c:'fr',f:'🇫🇷',n:'Francés',sr:'fr-FR',v:['fr_FR']},{c:'it',f:'🇮🇹',n:'Italiano',sr:'it-IT',v:['it_IT']},
  {c:'de',f:'🇩🇪',n:'Alemán',sr:'de-DE',v:['de_DE']},{c:'nl',f:'🇳🇱',n:'Neerlandés',sr:'nl-NL',v:['nl_NL','nl_BE']},{c:'ru',f:'🇷🇺',n:'Ruso',sr:'ru-RU',v:['ru_RU']},
  {c:'uk',f:'🇺🇦',n:'Ucraniano',sr:'uk-UA',v:['uk_UA']},{c:'pl',f:'🇵🇱',n:'Polaco',sr:'pl-PL',v:['pl_PL']},{c:'tr',f:'🇹🇷',n:'Turco',sr:'tr-TR',v:['tr_TR']},
@@ -606,7 +630,7 @@ const mmCode=c=>langOf(c).mm||c;
 // traduce siempre desde el español original cuando se puede (sale mejor)
 async function setSceneLang(s,to,auto){
   const btn=root.querySelector(`[data-id="${s.id}"] .lang`);
-  if(to==='nah'){s.voiceLang='nah';draw();setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});t.focus()}},80);return true}
+  if(to==='nah'){const opened=s.text.trim()?nahOpenGoogle(s):false;s.voiceLang='nah';draw();if(opened)toast('Se abrió Google con tu texto. Copia la traducción (⧉) y regresa: la pego sola.',6000);setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});t.focus()}},80);return true}
   if(!s.text.trim()){if(!auto)toast('Primero escribe el texto de esta escena.');return false}
   if(s.lang===to)return true;
   try{
@@ -634,7 +658,7 @@ function openLangBoard(s){
   const list=LANGS.filter(l=>!(all&&l.c==='nah'));
   openProj('🌐 Traducir a…',`<p class="micro" style="margin:0;font-size:12px">El idioma original es <b>español</b>. Toca un idioma y se traduce el texto ${all?'de <b>todas las escenas</b>':'de esta escena'}; si la voz era automática, también se crea en ese idioma.</p>
    <div class="lgrid">${list.map(l=>`<button class="chip ${s&&(l.c===cur||(l.c==='nah'&&s.voiceLang==='nah'))?'act':''}" data-lang="${l.c}"><span style="font-size:18px">${l.f}</span>${l.n}${l.c==='es'?'<small>original</small>':l.note?`<small>${l.note}</small>`:hasVoice(l.c)?'<small>🔊</small>':'<small>solo texto</small>'}</button>`).join('')}</div>
-   <p class="micro" style="margin:0">🔊 = tiene voz automática · “solo texto” = se traduce el texto; la voz la puedes grabar tú. ${all?'El náhuatl se elige en cada escena.':'Náhuatl: el texto sigue en español y tú escribes lo que dice la voz.'} Para traducir se necesita internet.</p>`);
+   <p class="micro" style="margin:0">🔊 = tiene voz automática · “solo texto” = se traduce el texto; la voz la puedes grabar tú. ${all?'El náhuatl se elige en cada escena.':'Náhuatl: se abre Google Translate con tu texto; copias la traducción y la app la pega para crear la voz (el texto en pantalla sigue en español).'} Para traducir se necesita internet.</p>`);
   $('#pbBody').querySelectorAll('[data-lang]').forEach(b=>b.onclick=async()=>{closeProj();const to=b.dataset.lang;if(all)await allLang(to);else await setSceneLang(s,to)});
   loadTTS().then(()=>{}).catch(()=>{});
 }
