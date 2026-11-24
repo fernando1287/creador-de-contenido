@@ -151,9 +151,18 @@ a.smallbtn{color:inherit;text-decoration:none}
 .nah{border:1px solid #6b4a2a;background:linear-gradient(120deg,#2a1f14,#10161e);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
 .nah .labelrow{color:#ffcf8a}
 .smallbtn.nahon{background:#6b4a2a;border-color:#a8743d;color:#ffe2b8}
+.top-actions{flex-wrap:wrap;justify-content:flex-end}
+.pform{display:grid;gap:10px}
+.pform label{display:grid;gap:5px;font-size:12px;font-weight:700;color:#c5d0dc}
+.pform input{background:#10161e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+.arow{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:#10161e}
+.arow img,.arow .noimg{width:64px;height:64px;border-radius:9px;object-fit:cover;background:#000;display:grid;place-items:center;font-size:24px}
+.arow b{display:block;font-size:14px}.arow .micro{display:block}
+.arow .acts{grid-column:1/-1;display:flex;gap:8px}.arow .acts .btn{flex:1;justify-content:center;padding:8px}
+.alist{display:grid;gap:8px;max-height:60vh;overflow:auto}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static;grid-row:1}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
-@media(max-width:580px){.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
+@media(max-width:580px){.top-actions{justify-content:flex-start}.top-actions .btn{flex:1 1 auto;justify-content:center}.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
 </style>
 </head>
 <body>
@@ -161,7 +170,7 @@ a.smallbtn{color:inherit;text-decoration:none}
   <header class="top">
     <div class="brand"><div class="logo">▶</div><div><h1>Creador de Contenido</h1><p>Une fotos, videos, texto y voz en un solo video para redes</p></div></div>
     <div class="top-actions">
-      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
+      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn" id="hdArchive">🗄 Archivar</button><button class="btn" id="hdNew">➕ Nuevo</button><button class="btn" id="hdProjects">📁 Proyectos<span id="projCount"></span></button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
     </div>
   </header>
 
@@ -259,7 +268,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 13 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 14 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -300,6 +309,12 @@ a.smallbtn{color:inherit;text-decoration:none}
   <a class="btn" id="moveOpen" style="justify-content:center;text-decoration:none;color:inherit" target="_blank" rel="noopener">2️⃣ Abrir el Creador del Portal</a>
   <p class="micro" style="margin:0">En el Creador del Portal toca <b>“📂 Abrir la copia”</b> y elige el archivo que guardaste (está en Descargas). Después instala esa app desde ahí y borra esta del teléfono.</p>
   <button class="smallbtn" id="moveLater" style="justify-self:start">Seguir aquí por ahora</button>
+ </div>
+</div>
+<div class="cut hidden" id="projBox" role="dialog" aria-label="Proyectos">
+ <div class="cut-box" style="max-width:560px;margin-top:6vh">
+  <div class="cut-head"><b id="pbTitle">📁 Mis proyectos</b><button class="iconbtn" id="pbClose" title="Cerrar">✕</button></div>
+  <div id="pbBody" style="display:grid;gap:12px"></div>
  </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -878,8 +893,8 @@ async function autosave(){
   saving=true;$('#saveState').textContent='Guardando…';
   const need=new Map();const addB=b=>{if(b)need.set(bid(b),b)};addB(settings.musicBlob);scenes.forEach(x=>{addB(x.mediaBlob);addB(x.audioBlob);addB(x.musicBlob)});
   try{
-    await tx('readwrite',st=>{for(const [k,b] of need)if(!savedKeys.has(k))st.put(b,k);for(const k of savedKeys)if(!need.has(k))st.delete(k);return st.put(meta,'project')});
-    savedKeys=new Set(need.keys());lastSig=sig;quotaWarned=false;$('#saveState').textContent='Guardado ✓';
+    await tx('readwrite',st=>{for(const [k,b] of need)if(!savedKeys.has(k))st.put(b,k);for(const k of savedKeys)if(!need.has(k)&&!archivedKeys.has(k))st.delete(k);return st.put(meta,'project')});
+    savedKeys=new Set([...need.keys(),...archivedKeys]);lastSig=sig;quotaWarned=false;$('#saveState').textContent='Guardado ✓';
   }catch(e){console.warn(e);$('#saveState').textContent='No se pudo guardar';if(!quotaWarned){quotaWarned=true;toast('El proyecto ya no cabe en el espacio de la app. Toca “⚡ Optimizar videos pesados” en Mi proyecto. Tu trabajo sigue aquí mientras no cierres la app.',7000)}}
   finally{saving=false;updateStorageInfo()}
 }
@@ -890,18 +905,101 @@ async function restore(){
   try{
     restoring=true;try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}
     const meta=await tx('readonly',st=>st.get('project'));const keys=await tx('readonly',st=>st.getAllKeys());savedKeys=new Set(keys.filter(k=>k!=='project'));
+    await loadArchives();
     if(!meta||!Array.isArray(meta.scenes)||!meta.scenes.length)return false;
+    await applyMeta(meta);lastSig=JSON.stringify(projectMeta());$('#saveState').textContent='Guardado ✓';return true;
+  }catch(e){console.warn(e);return false}finally{restoring=false}
+}
+async function applyMeta(meta){
     const getB=async k=>{if(!k)return null;const b=await tx('readonly',st=>st.get(k));if(b)blobIds.set(b,k);return b||null};
+    scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];
     const st=meta.settings||{};
     if(FORMATS[st.format])settings.format=st.format;if(st.textSize)settings.textSize=+st.textSize;
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;
     if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;if(st.ttsVoiceEn)settings.ttsVoiceEn=st.ttsVoiceEn;settings.musicBlob=await getB(st.music);settings.musicName=st.musicName||'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');
     if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
     for(const x of meta.scenes){const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio),musicBlob:await getB(x.musicFile)};if(d.music==='file'&&!d.musicBlob)d.music='';if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
-    selectedId=scenes[0]?.id||null;fillVoices();lastSig=JSON.stringify(projectMeta());$('#saveState').textContent='Guardado ✓';return true;
-  }catch(e){console.warn(e);return false}finally{restoring=false}
+    if(!scenes.length)scenes.push(makeScene());
+    selectedId=scenes[0]?.id||null;fillVoices();
 }
-$('#newProject').onclick=()=>{if(!confirm('¿Borrar este proyecto y empezar uno nuevo? (Si quieres conservarlo, primero haz una copia de seguridad.)'))return;stopVoice();stopMusicPreview();scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];settings.musicBlob=null;settings.musicName='';settings.musicPreset='';syncSettingsUI();add({});toast('Proyecto nuevo.')};
+$('#newProject').onclick=()=>projNew();
+
+/* ---------- archivar proyectos en los canales ---------- */
+let archives=[],archivedKeys=new Set();
+async function loadArchives(){try{archives=(await tx('readonly',st=>st.get('archives')))||[]}catch{archives=[]}recomputeArchived();updProjBtn()}
+function recomputeArchived(){archivedKeys=new Set(archives.flatMap(a=>a.keys||[]))}
+function updProjBtn(){$('#projCount').textContent=archives.length?` (${archives.length})`:''}
+function metaKeys(meta){return[...new Set([meta.settings&&meta.settings.music,...meta.scenes.flatMap(x=>[x.media,x.audio,x.musicFile])].filter(Boolean))]}
+const hasContent=()=>scenes.some(x=>x.kind||(x.text||'').trim()||x.audioBlob);
+async function flushSave(){for(let i=0;i<80&&saving;i++)await sleep(100);lastSig='';await autosave();return lastSig===JSON.stringify(projectMeta())}
+function defaultName(){if(pctx&&pctx.titulo)return pctx.titulo.slice(0,60);const t=scenes.map(x=>(x.text||'').trim()).find(Boolean);return t?t.replace(/\s+/g,' ').slice(0,50):'Proyecto del '+new Date().toLocaleDateString('es-MX')}
+function chanList(){return inPortal?((portalChannels&&portalChannels.length)?portalChannels:[]).map(x=>({i:x.i,n:chanName(x.i)})):[]}
+function snapThumb(){try{const k=120/Math.max(canvas.width,canvas.height),c=document.createElement('canvas');c.width=Math.round(canvas.width*k);c.height=Math.round(canvas.height*k);c.getContext('2d').drawImage(canvas,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.7)}catch{return''}}
+async function archiveCurrent({name,c,tema}){
+  if(!await flushSave()){toast('No se pudo guardar el proyecto. Revisa el espacio en “Mi proyecto”.',5000);return false}
+  await renderIdle();const meta=projectMeta(),id='a'+Date.now();
+  const entry={id,name:name||defaultName(),date:Date.now(),c:(c===''||c==null)?null:+c,tema:tema||null,scenes:meta.scenes.filter(x=>x.kind||x.text).length,dur:totalDur(),thumb:snapThumb(),keys:metaKeys(meta)};
+  try{await tx('readwrite',st=>{st.put(meta,'arch:'+id);return st.put([entry,...archives],'archives')})}catch(e){console.error(e);toast('No se pudo archivar.');return false}
+  archives=[entry,...archives];recomputeArchived();updProjBtn();return entry;
+}
+function freshProject(){stopVoice();stopMusicPreview();scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];settings.musicBlob=null;settings.musicName='';settings.musicPreset='';$('#result').classList.add('hidden');syncSettingsUI();add({});window.scrollTo({top:0,behavior:'smooth'})}
+async function openArchive(id){
+  const e=archives.find(a=>a.id===id);let meta=null;try{meta=await tx('readonly',st=>st.get('arch:'+id))}catch{}
+  if(!e||!meta)return toast('No encontré ese proyecto archivado.');
+  if(hasContent()){if(!confirm(`Para abrir “${e.name}”, tu proyecto actual se va a archivar en “Mis proyectos”. ¿Continuar?`))return;
+    if(!await archiveCurrent({name:defaultName(),c:pctx?pctx.c:null,tema:pctx&&pctx.tema||null}))return}
+  restoring=true;try{await applyMeta(meta)}finally{restoring=false}
+  archives=archives.filter(a=>a.id!==id);try{await tx('readwrite',st=>{st.delete('arch:'+id);return st.put(archives,'archives')})}catch{}
+  recomputeArchived();updProjBtn();lastSig='';syncSettingsUI();draw();closeProj();toast(`Abriste “${e.name}”.`);autosave();
+}
+async function deleteArchive(id){
+  const e=archives.find(a=>a.id===id);if(!e||!confirm(`¿Borrar para siempre “${e.name}”?`))return;
+  archives=archives.filter(a=>a.id!==id);recomputeArchived();const cur=new Set(metaKeys(projectMeta()));
+  try{await tx('readwrite',st=>{st.delete('arch:'+id);(e.keys||[]).forEach(k=>{if(!cur.has(k)&&!archivedKeys.has(k)){st.delete(k);savedKeys.delete(k)}});return st.put(archives,'archives')})}catch{}
+  updProjBtn();projList();toast('Proyecto borrado.');
+}
+function openProj(title,html){$('#pbTitle').textContent=title;$('#pbBody').innerHTML=html;$('#projBox').classList.remove('hidden')}
+function closeProj(){$('#projBox').classList.add('hidden')}
+$('#pbClose').onclick=closeProj;
+function whereTxt(e){const parts=[];if(e.c!=null)parts.push('📺 '+chanName(e.c));if(e.tema){const [,j,k]=e.tema.split('/');parts.push(`${+k+1} de ${MESES[+j].toLowerCase()}`)}return parts.join(' · ')||'Sin canal'}
+function projArchive(after){
+  if(!hasContent()){toast('Este proyecto está vacío: no hay nada que archivar.');return}
+  const ch=chanList(),c0=pctx?String(pctx.c):'',t0=pctx&&pctx.tema?pctx.tema.split('/'):null;
+  openProj('🗄 Archivar proyecto',`<div class="pform">
+   <label>Nombre del proyecto<input id="arName" value="${esc(defaultName())}" maxlength="80"></label>
+   ${ch.length?`<label>¿En qué canal lo archivo?<select id="arCanal"><option value="">Sin canal</option>${ch.map(x=>`<option value="${x.i}">${esc(x.n)}</option>`).join('')}</select></label>
+   <label>Día del calendario (opcional)<div class="row3"><select id="arMes"><option value="">Sin día</option>${MESES.map((m,j)=>`<option value="${j}">${m}</option>`).join('')}</select><select id="arDia"></select></div></label>`:`<p class="micro" style="margin:0">Para archivarlo en tus canales, abre el Creador desde tu Portal.</p>`}
+   <div class="fx-actions"><button class="btn primary" id="arGo">🗄 Archivar${after?' y crear nuevo':''}</button><button class="btn" id="arCancel">Cancelar</button></div>
+   <p class="micro" style="margin:0">Se guarda completo (fotos, videos, voces y música). Lo encuentras en 📁 Proyectos y en el canal dentro del Portal.</p></div>`);
+  const days=k=>{const j=$('#arMes').value;$('#arDia').innerHTML=j===''?'':Array.from({length:DIAS[+j]},(_,d)=>`<option value="${d}">${d+1}</option>`).join('');if(k!=null&&j!=='')$('#arDia').value=k;$('#arDia').classList.toggle('hidden',j==='')};
+  if(ch.length){$('#arCanal').value=c0;if(t0){$('#arMes').value=t0[1];days(t0[2])}else days();$('#arMes').onchange=()=>days(0)}
+  $('#arCancel').onclick=closeProj;
+  $('#arGo').onclick=async()=>{const b=$('#arGo');b.disabled=true;b.textContent='Archivando…';
+    const c=ch.length?$('#arCanal').value:'',j=ch.length?$('#arMes').value:'',tema=(c!==''&&j!=='')?`${c}/${j}/${$('#arDia').value}`:null;
+    const e=await archiveCurrent({name:$('#arName').value.trim(),c,tema});
+    if(!e){b.disabled=false;b.textContent='🗄 Archivar';return}
+    closeProj();freshProject();toast(`🗄 “${e.name}” archivado en ${whereTxt(e)}. Empezaste un proyecto nuevo.`,5000)};
+}
+function projNew(){
+  if(!hasContent()){freshProject();toast('Proyecto nuevo.');return}
+  openProj('➕ Nuevo proyecto',`<p style="margin:0;color:#c5d0dc">¿Qué hacemos con el proyecto que tienes ahora?</p>
+   <button class="btn primary" id="nwArch" style="justify-content:center">🗄 Archivarlo en un canal y crear nuevo</button>
+   <button class="btn" id="nwDel" style="justify-content:center">🗑 Borrarlo y crear nuevo</button>
+   <button class="smallbtn" id="nwCancel" style="justify-self:start">Cancelar</button>`);
+  $('#nwArch').onclick=()=>projArchive(true);$('#nwCancel').onclick=closeProj;
+  $('#nwDel').onclick=()=>{if(!confirm('¿Seguro? El proyecto actual se borrará para siempre.'))return;closeProj();freshProject();toast('Proyecto nuevo.')};
+}
+function projList(filter){
+  const ch=chanList();filter=filter??($('#pbFilter')?$('#pbFilter').value:'all');
+  const list=archives.filter(a=>filter==='all'||(filter==='none'?a.c==null:String(a.c)===filter));
+  openProj('📁 Mis proyectos',`${ch.length?`<select id="pbFilter"><option value="all">Todos los canales (${archives.length})</option><option value="none">Sin canal</option>${ch.map(x=>`<option value="${x.i}">${esc(x.n)} (${archives.filter(a=>a.c===x.i).length})</option>`).join('')}</select>`:''}
+   <div class="alist">${list.length?list.map(a=>`<div class="arow">${a.thumb?`<img src="${a.thumb}" alt="">`:'<div class="noimg">🎬</div>'}<div><b>${esc(a.name)}</b><span class="micro">${esc(whereTxt(a))}</span><span class="micro">${a.scenes} escena${a.scenes===1?'':'s'} · ${fmt(a.dur||0)} · archivado el ${new Date(a.date).toLocaleDateString('es-MX')}</span></div>
+     <div class="acts"><button class="btn primary" data-open="${a.id}">📂 Abrir</button><button class="btn" data-del="${a.id}">🗑 Borrar</button></div></div>`).join(''):`<p class="micro" style="margin:0">${archives.length?'No hay proyectos en este canal.':'Todavía no has archivado proyectos. Usa 🗄 Archivar arriba.'}</p>`}</div>`);
+  if($('#pbFilter')){$('#pbFilter').value=filter;$('#pbFilter').onchange=e=>projList(e.target.value)}
+  $('#pbBody').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openArchive(b.dataset.open));
+  $('#pbBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteArchive(b.dataset.del));
+}
+$('#hdArchive').onclick=()=>projArchive(false);$('#hdNew').onclick=projNew;$('#hdProjects').onclick=()=>projList('all');
 
 /* ---------- copia de seguridad (archivo) ---------- */
 $('#saveProject').onclick=async()=>{
@@ -1321,6 +1419,7 @@ syncSettingsUI();
     $('#moveOpen').href=PORTAL_URL+'creador/?importar=1';$('#moveBox').classList.remove('hidden');}
   if(ok){draw();if(!onGithub)toast('Tu proyecto sigue aquí.')}else add({});
   if(inPortal&&urlQ.has('importar'))$('#importBar').classList.remove('hidden');
+  if(urlQ.get('abrir'))setTimeout(()=>openArchive(urlQ.get('abrir')),300);
 })();
 })();
 </script>
