@@ -116,6 +116,17 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
 .sl input{width:100%;accent-color:var(--acc);margin:6px 0 0;height:26px}
 .sl-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 .fx-actions{display:flex;gap:8px;flex-wrap:wrap}
+.portal-bar{border:1px solid #4a3a6b;background:linear-gradient(120deg,#231a36,#151c25);border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.portal-bar .pt{font-size:13px;color:var(--muted)}.portal-bar .pt b{color:#fff;font-size:15px;display:block}
+.portal-bar .acts{display:flex;gap:8px;flex-wrap:wrap}
+.panel2{border-top:1px solid var(--line);margin-top:6px;padding-top:12px;display:grid;gap:8px}
+.panel2 h4{margin:0;font-size:13px}
+.panel2 textarea{min-height:70px}
+.row3{display:flex;gap:6px}.row3 select{flex:1;min-width:0}
+.netbtns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.netbtns button{display:block;text-align:center;font-size:12px;padding:9px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.okmsg{font-size:12px;color:var(--acc);min-height:16px}
+a.smallbtn{color:inherit;text-decoration:none}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static;grid-row:1}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
 @media(max-width:580px){.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
@@ -129,6 +140,11 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
       <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
     </div>
   </header>
+
+  <section class="portal-bar hidden" id="portalBar">
+    <div class="pt" id="portalTxt"></div>
+    <div class="acts"><button class="smallbtn hidden" id="useScript">📝 Usar el guion del tema</button><a class="smallbtn" id="backPortal" href="../">← Volver al portal</a></div>
+  </section>
 
   <section class="hero">
     <div><div class="step">FOTO / VIDEO + TEXTO + VOZ</div><h2>Cuenta tu historia escena por escena</h2><p>Carga una foto o un video, escribe o dicta el texto, graba tu voz y ajusta cuánto dura cada escena.</p></div>
@@ -187,6 +203,22 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
         <div class="result hidden" id="result">
           <video id="resultVideo" controls playsinline></video>
           <div class="btns"><button class="btn primary hidden" id="shareBtn">📲 Guardar en galería / compartir</button><a class="btn" id="downloadLink">⬇ Descargar</a></div>
+          <div class="panel2" id="portalSave">
+            <h4>📺 Guardar en mi Portal de Canales</h4>
+            <div id="portalSaveIn" class="hidden" style="display:grid;gap:8px">
+              <select id="psCanal"></select>
+              <div class="row3"><select id="psMes"></select><select id="psDia"></select></div>
+              <button class="btn" id="psBtn">💾 Guardar en el portal</button>
+            </div>
+            <div class="okmsg" id="psMsg"></div>
+            <p class="hint hidden" id="psOut" style="margin:0">Para guardar tus videos en el Portal, usa el Creador que está dentro del Portal: <a id="psLink" style="color:var(--acc)" href="#">abrir Creador en el Portal</a>.</p>
+          </div>
+          <div class="panel2">
+            <h4>🌐 Publicar en redes</h4>
+            <textarea id="caption" placeholder="Texto para tu publicación… #hashtags"></textarea>
+            <div class="netbtns" id="netBtns"></div>
+            <span class="micro">Primero guarda el video en tu galería. Al tocar una red se copia tu texto y se abre la app para que subas el video.</span>
+          </div>
         </div>
         <p class="hint">Se exporta en MP4 si tu navegador lo permite (si no, en WebM). Mantén esta pestaña abierta mientras se crea el video: tarda lo mismo que dura.</p>
       </div>
@@ -634,6 +666,7 @@ function finishExport(parts,mime,total){
   setStatus(`¡Video listo! ${ext.toUpperCase()} · ${fmt(total)} · ${mb} MB`+(ext==='webm'?' — Si una red no acepta WebM, ábrelo en Safari o conviértelo a MP4.':''));
   $('#progress').style.width='100%';
   setTimeout(()=>$('#result').scrollIntoView({behavior:'smooth',block:'center'}),300);
+  drawNets();afterExportPortal();
 }
 $('#shareBtn').onclick=async()=>{if(!lastExport)return;try{await navigator.share({files:[new File([lastExport.blob],lastExport.name,{type:lastExport.type})],title:'Mi contenido'})}catch(e){if(e.name!=='AbortError')toast('No se pudo compartir. Usa Descargar.')}};
 $('#playPreview').onclick=()=>{if(engine){if(!engine.record)engine.stop=true;return}runTimeline(false)};
@@ -810,6 +843,79 @@ async function playMusicPreview(){
     src.onended=()=>{if(musicPrev.src===src)stopMusicPreview()};musicPrev.src=src;$('#musicPlay').textContent='■ Detener';
   }catch(e){console.error(e);stopMusicPreview();toast('No se pudo preparar la música.')}
 }
+/* ---------- conexión con el Portal Madre de Canales ---------- */
+const PORTAL_URL='https://portal-madre-de-canales.fernandobejarano1287.workers.dev/';
+const MESES='Enero Febrero Marzo Abril Mayo Junio Julio Agosto Septiembre Octubre Noviembre Diciembre'.split(' '),DIAS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const lsJSON=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const portalChannels=lsJSON('portal-canales',null);
+const inPortal=!!portalChannels||/portal-madre-de-canales/.test(location.hostname);
+const urlQ=new URLSearchParams(location.search);
+let pctx=null;
+(()=>{const t=lsJSON('portal-tema-actual',null);if(!t)return;
+  if(urlQ.get('tema')&&t.tema===urlQ.get('tema'))pctx=t;else if(urlQ.get('canal')!==null&&String(t.c)===urlQ.get('canal'))pctx=t})();
+const portalData=()=>lsJSON('portal-madre-editorial-v1',{});
+const chanName=i=>{const d=portalData();return d['name'+i]||(portalChannels||[]).find(x=>x.i==i)?.n||('Canal '+(+i+1))};
+const NETS=[['tiktok','🎵 TikTok','https://www.tiktok.com/upload'],['instagram','📸 Instagram','https://www.instagram.com/'],['youtube','▶️ YouTube','https://www.youtube.com/upload'],['facebook','👍 Facebook','https://www.facebook.com/'],['whatsapp','💬 WhatsApp',''],['x','✖️ X','']];
+function currentChannel(){const v=$('#psCanal').value;return v!==''&&v!=null?+v:(pctx?+pctx.c:null)}
+function drawNets(){
+  const red=currentChannel()!=null?(portalData()['redes'+currentChannel()]||{}):{};
+  $('#netBtns').innerHTML=NETS.map(([k,n])=>`<button class="btn" data-net="${k}">${n}${red[k]?' · '+esc(red[k].replace(/^https?:\/\/(www\.)?[^/]+\//,'@').replace(/^@@/,'@').slice(0,18)):''}</button>`).join('');
+}
+$('#netBtns').onclick=async e=>{
+  const b=e.target.closest('[data-net]');if(!b)return;const k=b.dataset.net,net=NETS.find(x=>x[0]===k),text=$('#caption').value.trim();
+  if(text){try{await navigator.clipboard.writeText(text);toast('Texto copiado. Pégalo en tu publicación.')}catch{}}
+  if(k==='whatsapp'&&lastExport){const f=new File([lastExport.blob],lastExport.name,{type:lastExport.type});try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text});return}}catch(err){if(err.name==='AbortError')return}}
+  const url=k==='whatsapp'?'https://wa.me/?text='+encodeURIComponent(text):k==='x'?'https://x.com/intent/post?text='+encodeURIComponent(text):net[2];
+  window.open(url,'_blank','noopener');
+};
+function initPortalUI(){
+  $('#psLink').href=PORTAL_URL+'creador/';
+  if(pctx){$('#portalTxt').innerHTML=`📺 Video para <b>${esc(pctx.canal||chanName(pctx.c))}</b>${pctx.tema?esc((pctx.fecha?pctx.fecha+' · ':'')+(pctx.titulo||'')):'Canal del portal'}`;
+    $('#useScript').classList.toggle('hidden',!(pctx.guion||pctx.titulo));
+    if(!$('#caption').value)$('#caption').value=[pctx.titulo,'#'+String(pctx.canal||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]/g,'')].filter(Boolean).join('\n\n');}
+  else $('#portalTxt').innerHTML='📺 <b>Portal Madre de Canales</b>Elige el canal y el día al guardar tu video.';
+  $('#portalBar').classList.toggle('hidden',!inPortal);
+  if(inPortal){
+    $('#portalSaveIn').classList.remove('hidden');
+    const list=(portalChannels||[]).length?portalChannels:[{i:0,n:'Misterios y Enigmas'},{i:1,n:'El Observador'}];
+    $('#psCanal').innerHTML='<option value="">Elige el canal…</option>'+list.map(x=>`<option value="${x.i}">${esc(chanName(x.i))}</option>`).join('');
+    $('#psMes').innerHTML=MESES.map((m,j)=>`<option value="${j}">${m}</option>`).join('');
+    let c='',j=new Date().getMonth(),k=new Date().getDate()-1;
+    if(pctx){c=pctx.c;if(pctx.tema){const p=pctx.tema.split('/');j=+p[1];k=+p[2]}}
+    $('#psCanal').value=c;$('#psMes').value=j;fillDays(k);
+  }else $('#psOut').classList.remove('hidden');
+  drawNets();
+}
+function fillDays(k){const j=+$('#psMes').value;$('#psDia').innerHTML=Array.from({length:DIAS[j]},(_,d)=>`<option value="${d}">${d+1} de ${MESES[j].toLowerCase()}</option>`).join('');$('#psDia').value=Math.min(k??0,DIAS[j]-1)}
+$('#psMes').onchange=()=>fillDays(+$('#psDia').value);
+$('#psCanal').onchange=drawNets;
+let PDBP=null;
+function portalDB(){return PDBP||(PDBP=new Promise((res,rej)=>{const r=indexedDB.open('portal-media',1);r.onupgradeneeded=()=>{const st=r.result.createObjectStore('media',{keyPath:'id',autoIncrement:true});st.createIndex('topic','topic')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function saveToPortal(topic){
+  if(!lastExport)return;const db=await portalDB();const c=+topic.split('/')[0],tit=(pctx&&pctx.tema===topic&&pctx.titulo)||'video';
+  const name=`${chanName(c)} - ${tit}.${lastExport.name.split('.').pop()}`.replace(/[\\/:*?"<>|]/g,'');
+  await new Promise((res,rej)=>{const t=db.transaction('media','readwrite');t.objectStore('media').add({topic,kind:'v',name,type:lastExport.type,size:lastExport.blob.size,date:Date.now(),blob:lastExport.blob});t.oncomplete=res;t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});
+  try{const a=lsJSON('portal-media-n',{});const x=a[topic]||{f:0,v:0};x.v=(x.v||0)+1;a[topic]=x;localStorage.setItem('portal-media-n',JSON.stringify(a))}catch{}
+  const [,j,k]=topic.split('/');$('#psMsg').textContent=`✓ Guardado en el portal: ${chanName(c)} · ${+k+1} de ${MESES[+j].toLowerCase()}`;
+}
+$('#psBtn').onclick=async()=>{
+  if(!lastExport)return toast('Primero crea el video.');const c=$('#psCanal').value;if(c==='')return toast('Elige el canal.');
+  try{await saveToPortal(`${c}/${$('#psMes').value}/${$('#psDia').value}`)}catch(e){console.error(e);$('#psMsg').textContent='No se pudo guardar. Puede que el teléfono no tenga espacio.'}
+};
+async function afterExportPortal(){if(inPortal&&pctx&&pctx.tema){try{await saveToPortal(pctx.tema)}catch(e){console.error(e);$('#psMsg').textContent='No se pudo guardar en el portal automáticamente. Toca “Guardar en el portal”.'}}else $('#psMsg').textContent=''}
+function splitScript(t){
+  t=t.replace(/\r/g,'').trim();let parts=t.split(/\n\s*\n+/).map(x=>x.replace(/\s*\n\s*/g,' ').trim()).filter(Boolean);
+  const out=[];parts.forEach(p=>{if(p.length<=200){out.push(p);return}const sent=p.match(/[^.!?¡¿…]+[.!?…]+["”»]?|[^.!?…]+$/g)||[p];let cur='';sent.forEach(x=>{x=x.trim();if(!x)return;if(cur&&(cur+' '+x).length>180){out.push(cur);cur=x}else cur=cur?cur+' '+x:x});if(cur)out.push(cur)});
+  return out.slice(0,40);
+}
+$('#useScript').onclick=()=>{
+  const src=(pctx&&(pctx.guion||pctx.titulo))||'';const parts=splitScript(src);if(!parts.length)return toast('Este tema no tiene guion.');
+  if(!confirm(`Voy a crear ${parts.length} escena${parts.length>1?'s':''} con el texto del guion. ¿Continuar?`))return;
+  let empties=scenes.filter(x=>!x.kind&&!x.text&&!x.audioUrl);
+  parts.forEach(t=>{const e=empties.shift();if(e)e.text=t;else scenes.push(makeScene({text:t}))});
+  selectedId=scenes[0]?.id;draw();toast(`Listo: ${parts.length} escenas. Ahora agrega una foto o video a cada una.`,4500);
+};
+initPortalUI();
 $('#makeVideoTop').onclick=()=>{$('#exportBtn').scrollIntoView({behavior:'smooth',block:'center'});if(!engine)runTimeline(true)};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&engine&&engine.record)toast('Regresa a esta pestaña: el video se crea solo mientras está visible.',5000)});
@@ -819,9 +925,9 @@ window.addEventListener('beforeunload',e=>{if(lastSig!==JSON.stringify(projectMe
 let installEvt=null;const ib=$('#installBtn');
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone)ib.classList.remove('hidden')});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!standalone&&!inPortal)ib.classList.remove('hidden')});
 window.addEventListener('appinstalled',()=>{ib.classList.add('hidden');toast('¡App instalada! Búscala en tu pantalla de inicio.')});
-if(isIOS&&!standalone)ib.classList.remove('hidden');
+if(isIOS&&!standalone&&!inPortal)ib.classList.remove('hidden');
 ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.classList.add('hidden')}else if(isIOS)toast('En Safari toca Compartir ⬆️ y luego “Agregar a inicio”.',6000);else toast('Abre el menú del navegador ⋮ y elige “Instalar app”.',6000)};
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
