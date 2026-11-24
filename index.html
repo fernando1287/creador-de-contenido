@@ -126,9 +126,7 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
   <header class="top">
     <div class="brand"><div class="logo">▶</div><div><h1>Creador de Contenido</h1><p>Une fotos, videos, texto y voz en un solo video para redes</p></div></div>
     <div class="top-actions">
-      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn" id="saveProject">💾 Guardar proyecto</button>
-      <button class="btn" id="loadProject">📂 Abrir proyecto</button>
-      <input id="projectFile" type="file" accept="application/json,.json" hidden>
+      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
     </div>
   </header>
 
@@ -170,11 +168,13 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
             <span class="micro">La primera vez descarga la voz (necesita internet). Después funciona sin internet.</span>
           </div>
           <div class="set-row"><span class="set-title">Música de fondo</span>
+            <div class="chips" id="musicChips"></div>
             <div class="narration">
-              <label class="smallbtn">♫ Elegir música<input id="musicFile" type="file" accept="audio/*" hidden></label>
-              <button class="smallbtn hidden" id="musicRemove" title="Quitar música">✕</button>
+              <button class="smallbtn" id="musicPlay">▶ Escuchar</button>
+              <label class="smallbtn">♫ Usar mi música<input id="musicFile" type="file" accept="audio/*" hidden></label>
               <span class="audio-name" id="musicName"></span>
             </div>
+            <span class="micro">Suena despacito debajo del video y baja sola cuando hay voz.</span>
             <div class="vol"><span class="micro">Volumen</span><input type="range" id="musicVol" min="0" max="1" step="0.05"></div>
           </div>
         </div>
@@ -186,9 +186,16 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
         <div class="status" id="status"></div>
         <div class="result hidden" id="result">
           <video id="resultVideo" controls playsinline></video>
-          <div class="btns"><a class="btn" id="downloadLink">⬇ Descargar</a><button class="btn primary hidden" id="shareBtn">↗ Compartir</button></div>
+          <div class="btns"><button class="btn primary hidden" id="shareBtn">📲 Guardar en galería / compartir</button><a class="btn" id="downloadLink">⬇ Descargar</a></div>
         </div>
         <p class="hint">Se exporta en MP4 si tu navegador lo permite (si no, en WebM). Mantén esta pestaña abierta mientras se crea el video: tarda lo mismo que dura.</p>
+      </div>
+
+      <div class="card" id="projectCard">
+        <h3>Mi proyecto <span id="saveState"></span></h3>
+        <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
+        <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
+        <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
   </div>
@@ -204,7 +211,7 @@ const AC=window.AudioContext||window.webkitAudioContext;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const FORMATS={'9:16':[720,1280],'1:1':[720,720],'16:9':[1280,720]};
 const MIMES=['video/mp4;codecs=avc1.42E01F,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicVol:0.25,ttsVoice:(()=>{try{return localStorage.getItem('ttsVoice')||'es_MX-claude-high'}catch{return'es_MX-claude-high'}})()};
+const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicPreset:'',musicVol:0.25,ttsVoice:(()=>{try{return localStorage.getItem('ttsVoice')||'es_MX-claude-high'}catch{return'es_MX-claude-high'}})()};
 let scenes=[],idc=0,selectedId=null,engine=null,decodeCtx=null,idle={url:'',el:null},idleTimer=null,lastExport=null;
 
 /* ---------- utilidades ---------- */
@@ -231,9 +238,19 @@ function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load
 function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
+  if(!isVideoFile(file))file=await shrinkImage(file);
   revoke(s.mediaUrl);s.mediaBlob=file;s.mediaUrl=URL.createObjectURL(file);s.mediaName=file.name||'';s.kind=isVideoFile(file)?'video':'image';s.mediaDur=0;
   if(s.kind==='video'){const d=await videoMeta(s.mediaUrl);if(d&&isFinite(d)){s.mediaDur=d;s.duration=clampDur(Math.max(d,s.audioDur||0))}}
   selectedId=s.id;
+}
+async function shrinkImage(file){
+  try{const url=URL.createObjectURL(file),im=await loadImg(url);URL.revokeObjectURL(url);
+    const MAX=2160,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,MAX/Math.max(w,h));
+    if(k===1&&file.size<2.5e6)return file;
+    const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',0.9));if(!b||b.size>=file.size)return file;
+    return new File([b],(file.name||'foto').replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'});
+  }catch{return file}
 }
 async function setAudio(s,blob,name){
   revoke(s.audioUrl);s.audioBlob=blob;s.audioUrl=URL.createObjectURL(blob);s.audioName=name;s.audioDur=await audioDuration(blob);s.fxOpen=true;
@@ -544,7 +561,7 @@ function setBusy(on,record){
   eb.textContent=on&&record?'■ Cancelar exportación':'Unir y exportar video';eb.classList.toggle('cancel',on&&record);eb.disabled=on&&!record;
 }
 async function runTimeline(record){
-  stopVoice();
+  stopVoice();stopMusicPreview();
   const list=scenes.filter(s=>s.kind);
   if(!list.length)return toast('Agrega por lo menos una foto o video.');
   if(record&&(!window.MediaRecorder||!canvas.captureStream))return toast('Tu navegador no permite exportar video. Usa Chrome o Safari actualizado.');
@@ -569,10 +586,10 @@ async function runTimeline(record){
       if(s.audioBlob){try{nb=await getVoiceBuffer(s)}catch(e){console.warn('audio',e);toast(`No se pudo leer el audio de la escena ${i+1}.`)}}
       items.push({s,m,nb});
     }
-    let musicBuf=null;if(settings.musicBlob&&!run.stop){try{musicBuf=await decodeBuf(ac,settings.musicBlob)}catch{toast('No se pudo leer la música de fondo.')}}
+    let musicBuf=null;if(!run.stop){try{musicBuf=await getMusicBuffer(ac.sampleRate,ac)}catch(e){console.warn(e);toast('No se pudo preparar la música de fondo.')}}
     if(run.stop)throw'stop';
     const total=items.reduce((a,x)=>a+x.s.duration,0);
-    if(musicBuf){const g=ac.createGain();g.connect(out);musicSrc=ac.createBufferSource();musicSrc.buffer=musicBuf;musicSrc.loop=true;musicSrc.connect(g);const t=ac.currentTime+0.05;g.gain.setValueAtTime(settings.musicVol,t);if(total>2){g.gain.setValueAtTime(settings.musicVol,t+total-1.2);g.gain.linearRampToValueAtTime(0,t+total)}musicSrc.start(t)}
+    let musicGain=null;if(musicBuf){const g=ac.createGain();musicGain=g;g.connect(out);musicSrc=ac.createBufferSource();musicSrc.buffer=musicBuf;musicSrc.loop=true;musicSrc.connect(g);const t=ac.currentTime+0.05;g.gain.setValueAtTime(settings.musicVol,t);if(total>2){g.gain.setValueAtTime(settings.musicVol,t+total-1.2);g.gain.linearRampToValueAtTime(0,t+total)}musicSrc.start(t)}
     let parts=[],mime='',done=null;
     if(record){
       stream=canvas.captureStream(30);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
@@ -587,10 +604,10 @@ async function runTimeline(record){
     for(let i=0;i<items.length&&!run.stop;i++){
       const {s,m,nb}=items[i];let ns=null;
       if(m&&s.kind==='video'){m.muted=!s.videoAudio;const r=videoRate(s);try{m.preservesPitch=true;m.defaultPlaybackRate=r;m.playbackRate=r}catch{}try{m.currentTime=0}catch{}try{await m.play()}catch{m.muted=true;try{await m.play()}catch{}}}
-      if(nb){ns=ac.createBufferSource();ns.buffer=nb;ns.connect(out);ns.start()}
+      if(nb){ns=ac.createBufferSource();ns.buffer=nb;ns.connect(out);ns.start();if(musicGain)musicGain.gain.setTargetAtTime(settings.musicVol*0.4,ac.currentTime,0.15)}
       const t0=performance.now(),dur=s.duration;
       while(!run.stop){const t=(performance.now()-t0)/1000;if(t>=dur)break;drawScene(ctx,W,H,s,m,t,{index:i});progress((passed+t)/total,passed+t,total,record);await sleep(1000/30)}
-      if(ns)try{ns.stop()}catch{}
+      if(ns){try{ns.stop()}catch{}if(musicGain&&i<items.length-1)musicGain.gain.setTargetAtTime(settings.musicVol,ac.currentTime,0.3)}
       if(m&&s.kind==='video')m.pause();
       passed+=dur;
     }
@@ -616,6 +633,7 @@ function finishExport(parts,mime,total){
   const mb=(blob.size/1048576).toFixed(1);
   setStatus(`¡Video listo! ${ext.toUpperCase()} · ${fmt(total)} · ${mb} MB`+(ext==='webm'?' — Si una red no acepta WebM, ábrelo en Safari o conviértelo a MP4.':''));
   $('#progress').style.width='100%';
+  setTimeout(()=>$('#result').scrollIntoView({behavior:'smooth',block:'center'}),300);
 }
 $('#shareBtn').onclick=async()=>{if(!lastExport)return;try{await navigator.share({files:[new File([lastExport.blob],lastExport.name,{type:lastExport.type})],title:'Mi contenido'})}catch(e){if(e.name!=='AbortError')toast('No se pudo compartir. Usa Descargar.')}};
 $('#playPreview').onclick=()=>{if(engine){if(!engine.record)engine.stop=true;return}runTimeline(false)};
@@ -635,38 +653,82 @@ function syncSettingsUI(){
   document.querySelectorAll('#formatSeg button').forEach(b=>b.classList.toggle('act',b.dataset.v===settings.format));
   document.querySelectorAll('#sizeSeg button').forEach(b=>b.classList.toggle('act',+b.dataset.v===settings.textSize));
   $('#optTransition').checked=settings.transition;$('#optMotion').checked=settings.motion;$('#musicVol').value=settings.musicVol;
-  $('#musicName').textContent=settings.musicName;$('#musicRemove').classList.toggle('hidden',!settings.musicBlob);
+  $('#musicChips').innerHTML=[['','🔇 Sin música'],...Object.entries(TRACKS).map(([k,t])=>[k,t.name]),...(settings.musicBlob?[['file','♫ '+(settings.musicName||'Mi música')]]:[])].map(([k,n])=>`<button class="chip ${settings.musicPreset===k?'act':''}" data-m="${k}">${esc(n)}</button>`).join('');
+  $('#musicName').textContent='';$('#musicPlay').disabled=!settings.musicPreset;
 }
 $('#formatSeg').onclick=e=>{const v=e.target.dataset.v;if(!v||engine)return;settings.format=v;syncSettingsUI();renderIdle()};
 $('#sizeSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;settings.textSize=+v;syncSettingsUI();renderIdleSoon()};
 $('#optTransition').onchange=e=>settings.transition=e.target.checked;
 $('#optMotion').onchange=e=>settings.motion=e.target.checked;
 $('#musicVol').oninput=e=>settings.musicVol=+e.target.value;
-$('#musicFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;settings.musicBlob=f;settings.musicName=f.name;syncSettingsUI()};
-$('#musicRemove').onclick=()=>{settings.musicBlob=null;settings.musicName='';syncSettingsUI()};
+$('#musicFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;settings.musicBlob=f;settings.musicName=f.name;settings.musicPreset='file';syncSettingsUI();playMusicPreview()};
+$('#musicChips').onclick=e=>{const k=e.target.dataset&&e.target.dataset.m;if(k===undefined)return;if(k==='file'&&!settings.musicBlob)return;settings.musicPreset=k;syncSettingsUI();if(k)playMusicPreview();else stopMusicPreview()};
+$('#musicPlay').onclick=()=>{if(musicPrev.src){stopMusicPreview();return}playMusicPreview()};
 
-/* ---------- guardar / abrir ---------- */
-$('#saveProject').onclick=async()=>{
-  if(!scenes.length)return toast('No hay nada que guardar todavía.');
-  toast('Guardando proyecto…',6000);
+/* ---------- guardar automático (IndexedDB) ---------- */
+const blobIds=new WeakMap();let nextBid=Date.now(),savedKeys=new Set(),lastSig='',restoring=false,dbp=null,quotaWarned=false;
+function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blobIds.set(b,k)}return k}
+function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
+function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,music:bid(settings.musicBlob)},
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+let saving=false;
+async function autosave(){
+  if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
+  saving=true;$('#saveState').textContent='Guardando…';
+  const need=new Map();const addB=b=>{if(b)need.set(bid(b),b)};addB(settings.musicBlob);scenes.forEach(x=>{addB(x.mediaBlob);addB(x.audioBlob)});
   try{
-    const payload={app:'creador-de-contenido',version:2,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,ttsVoice:settings.ttsVoice,music:settings.musicBlob?await blobToData(settings.musicBlob):''},
-      scenes:await Promise.all(scenes.map(async s=>({kind:s.kind,media:s.mediaBlob?await blobToData(s.mediaBlob):'',mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,fx:s.fx,audio:s.audioBlob?await blobToData(s.audioBlob):'',audioName:s.audioName,audioDur:s.audioDur})))};
-    const b=new Blob([JSON.stringify(payload)],{type:'application/json'}),a=document.createElement('a'),u=URL.createObjectURL(b);
-    a.href=u;a.download='mi_proyecto_de_contenido.json';a.click();setTimeout(()=>revoke(u),60000);
-    toast(`Proyecto guardado (${(b.size/1048576).toFixed(1)} MB) con fotos, videos y audios.`);
-  }catch(e){console.error(e);toast('No se pudo guardar. Si tienes videos muy pesados, prueba con menos escenas.')}
+    await tx('readwrite',st=>{for(const [k,b] of need)if(!savedKeys.has(k))st.put(b,k);for(const k of savedKeys)if(!need.has(k))st.delete(k);return st.put(meta,'project')});
+    savedKeys=new Set(need.keys());lastSig=sig;$('#saveState').textContent='Guardado ✓';
+  }catch(e){console.warn(e);$('#saveState').textContent='No se pudo guardar';if(!quotaWarned){quotaWarned=true;toast('El teléfono no tiene espacio para guardar el proyecto completo.',5000)}}
+  finally{saving=false}
+}
+setInterval(autosave,2000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)autosave()});
+async function restore(){
+  if(!window.indexedDB)return false;
+  try{
+    restoring=true;try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch{}
+    const meta=await tx('readonly',st=>st.get('project'));const keys=await tx('readonly',st=>st.getAllKeys());savedKeys=new Set(keys.filter(k=>k!=='project'));
+    if(!meta||!Array.isArray(meta.scenes)||!meta.scenes.length)return false;
+    const getB=async k=>{if(!k)return null;const b=await tx('readonly',st=>st.get(k));if(b)blobIds.set(b,k);return b||null};
+    const st=meta.settings||{};
+    if(FORMATS[st.format])settings.format=st.format;if(st.textSize)settings.textSize=+st.textSize;
+    if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;
+    if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;settings.musicBlob=await getB(st.music);settings.musicName=st.musicName||'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');
+    if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
+    for(const x of meta.scenes){const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio)};if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
+    selectedId=scenes[0]?.id||null;fillVoices();lastSig=JSON.stringify(projectMeta());$('#saveState').textContent='Guardado ✓';return true;
+  }catch(e){console.warn(e);return false}finally{restoring=false}
+}
+$('#newProject').onclick=()=>{if(!confirm('¿Borrar este proyecto y empezar uno nuevo? (Si quieres conservarlo, primero haz una copia de seguridad.)'))return;stopVoice();stopMusicPreview();scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];settings.musicBlob=null;settings.musicName='';settings.musicPreset='';syncSettingsUI();add({});toast('Proyecto nuevo.')};
+
+/* ---------- copia de seguridad (archivo) ---------- */
+$('#saveProject').onclick=async()=>{
+  if(!scenes.some(x=>x.kind||x.text))return toast('No hay nada que guardar todavía.');
+  toast('Creando copia de seguridad…',8000);
+  try{
+    const m=projectMeta(),parts=[];
+    const st={...m.settings,music:settings.musicBlob?await blobToData(settings.musicBlob):''};
+    parts.push('{"app":"creador-de-contenido","version":3,"settings":',JSON.stringify(st),',"scenes":[');
+    for(let i=0;i<scenes.length;i++){const x=scenes[i],o={...m.scenes[i],media:x.mediaBlob?await blobToData(x.mediaBlob):'',audio:x.audioBlob?await blobToData(x.audioBlob):''};parts.push((i?',':'')+JSON.stringify(o))}
+    parts.push(']}');
+    const b=new Blob(parts,{type:'application/json'}),a=document.createElement('a'),u=URL.createObjectURL(b);
+    a.href=u;a.download='copia_creador_de_contenido.json';a.click();setTimeout(()=>revoke(u),60000);
+    toast(`Copia de seguridad lista (${(b.size/1048576).toFixed(1)} MB). Recuerda: no es un video.`,5000);
+  }catch(e){console.error(e);toast('No se pudo crear la copia. Tu proyecto sigue guardado dentro de la app.',5000)}
 };
 $('#loadProject').onclick=()=>$('#projectFile').click();
 $('#projectFile').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
   try{
     const data=JSON.parse(await f.text());if(!Array.isArray(data.scenes))throw 0;
-    scenes.forEach(s=>{revoke(s.mediaUrl);revoke(s.audioUrl)});scenes=[];
+    if(scenes.some(x=>x.kind||x.text)&&!confirm('¿Reemplazar el proyecto actual por la copia?'))return;
+    scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[];
     const st=data.settings||{};
     if(FORMATS[st.format])settings.format=st.format;if(st.textSize)settings.textSize=+st.textSize;
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;fillVoices();
-    settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';
+    settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
     for(const x of data.scenes){
       const d={text:x.text,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
       const media=x.media||x.image;
@@ -674,12 +736,84 @@ $('#projectFile').onchange=async e=>{
       if(x.audio)d.audioBlob=dataToBlob(x.audio);else{d.audioName='';d.audioDur=0}
       scenes.push(makeScene(d));
     }
-    selectedId=scenes[0]?.id||null;syncSettingsUI();draw();toast('Proyecto abierto.');
-  }catch(err){console.error(err);toast('No se pudo abrir ese proyecto.')}
+    if(!scenes.length)add({});selectedId=scenes[0]?.id||null;syncSettingsUI();draw();toast('Copia abierta.');
+  }catch(err){console.error(err);toast('Ese archivo no es una copia de este proyecto.')}
 };
 
+/* ---------- música incluida (se compone en el teléfono) ---------- */
+const TRACKS={
+ galactica:{name:'🌌 Galáctica',chords:[[45,57,64,71],[41,57,60,67],[48,55,64,67],[43,55,62,69]]},
+ dramatica:{name:'🎭 Dramática',chords:[[36,48,55,63],[32,44,51,60],[27,39,51,58],[34,46,53,62]]},
+ misterio:{name:'👻 Misterio',chords:[[38,50,53,58],[38,50,53,57],[34,50,53,58],[37,49,52,56]]},
+ suspenso:{name:'⏳ Suspenso',chords:[[40,52,55,59],[36,52,55,60],[33,52,57,60],[35,51,54,59]]},
+ epica:{name:'⚔️ Épica',chords:[[38,50,57,62],[34,50,53,58],[36,48,55,60],[33,49,57,64]]},
+ tranquila:{name:'🌅 Tranquila',chords:[[36,60,64,67],[33,57,60,64],[29,57,60,65],[31,55,59,62]]}};
+const LOOP=32,trackCache=new Map();
+const mf=m=>440*Math.pow(2,(m-69)/12);
+function rng(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
+async function renderTrack(key,sr){
+  const T=TRACKS[key],TAIL=5,OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,Math.floor(sr*(LOOP+TAIL)),sr);
+  const master=oc.createGain();master.gain.value=0.9;const comp=oc.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;master.connect(comp).connect(oc.destination);
+  const rev=oc.createConvolver(),rl=Math.floor(sr*3.5),ib=oc.createBuffer(2,rl,sr);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<rl;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/rl,2.5)}rev.buffer=ib;
+  const revIn=oc.createGain();revIn.gain.value=0.5;revIn.connect(rev).connect(master);
+  const dly=oc.createDelay(1.5);dly.delayTime.value=0.375;const fb=oc.createGain();fb.gain.value=0.45;const dIn=oc.createGain();dIn.gain.value=0;dIn.connect(dly);dly.connect(fb).connect(dly);dly.connect(revIn);dly.connect(master);
+  const bus=(dry=1,wet=0.5,echo=0)=>{const g=oc.createGain();g.gain.value=dry;g.connect(master);const w=oc.createGain();w.gain.value=wet;g.connect(w).connect(revIn);if(echo){const e=oc.createGain();e.gain.value=echo;g.connect(e).connect(dly);dIn.gain.value=1}return g};
+  const env=(g,t,a,d,peak,hold=0)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);if(hold)g.gain.setValueAtTime(peak,t+a+hold);g.gain.exponentialRampToValueAtTime(0.0001,t+a+hold+d);g.gain.setValueAtTime(0,t+a+hold+d+0.01)};
+  const pad=(notes,t,dur,{type='sawtooth',cut=900,vol=0.035,out,lfo=0.1}={})=>{const f=oc.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;f.Q.value=0.8;
+    const l=oc.createOscillator(),lg=oc.createGain();l.frequency.value=lfo;lg.gain.value=cut*0.35;l.connect(lg).connect(f.frequency);l.start(t);l.stop(t+dur+3);
+    const g=oc.createGain();f.connect(g).connect(out);env(g,t,Math.min(2.5,dur/3),2.5,1,Math.max(0,dur-Math.min(2.5,dur/3)-0.5));
+    notes.forEach(n=>[-7,7].forEach(dt=>{const o=oc.createOscillator();o.type=type;o.frequency.value=mf(n);o.detune.value=dt;const og=oc.createGain();og.gain.value=vol;o.connect(og).connect(f);o.start(t);o.stop(t+dur+3)}))};
+  const pluck=(n,t,{type='triangle',vol=0.12,dec=1.6,out}={})=>{const o=oc.createOscillator();o.type=type;o.frequency.value=mf(n);const g=oc.createGain();o.connect(g).connect(out);env(g,t,0.005,dec,vol);o.start(t);o.stop(t+dec+0.1)};
+  const bell=(n,t,{vol=0.08,out}={})=>{[[1,1],[2.76,0.4],[5.4,0.2]].forEach(([r,a])=>{const o=oc.createOscillator();o.frequency.value=mf(n)*r;const g=oc.createGain();o.connect(g).connect(out);env(g,t,0.003,2.5/r+0.4,vol*a);o.start(t);o.stop(t+3)})};
+  const boom=(t,{vol=0.5,out}={})=>{const o=oc.createOscillator();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(42,t+0.6);const g=oc.createGain();o.connect(g).connect(out);env(g,t,0.01,1.6,vol);o.start(t);o.stop(t+1.8);
+    const nb=oc.createBuffer(1,Math.floor(sr*0.3),sr),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);const ns=oc.createBufferSource();ns.buffer=nb;const nf=oc.createBiquadFilter();nf.type='lowpass';nf.frequency.value=500;const ng=oc.createGain();ng.gain.value=vol*0.5;ns.connect(nf).connect(ng).connect(out);ns.start(t)};
+  const sub=(n,t,dur,{vol=0.12,out}={})=>{const o=oc.createOscillator();o.type='sine';o.frequency.value=mf(n);const g=oc.createGain();o.connect(g).connect(out);env(g,t,1.5,2,vol,Math.max(0,dur-2));o.start(t);o.stop(t+dur+2.5)};
+  const r=rng(key.length*7919+13),C=T.chords,cd=LOOP/C.length;
+  const wet=bus(0.8,0.9),dry=bus(1,0.35),echo=bus(0.7,0.6,0.5);
+  C.forEach((ch,i)=>{const t=i*cd;
+    switch(key){
+     case'galactica':pad(ch.slice(1),t,cd,{type:'sawtooth',cut:1100,vol:0.03,out:wet,lfo:0.07});sub(ch[0]-12,t,cd,{out:dry,vol:0.14});
+       for(let k=0;k<cd*2;k++){if(r()<0.7)pluck(ch[1+(k%3)]+24,t+k*0.5,{type:'sine',vol:0.05,dec:1.2,out:echo})}break;
+     case'dramatica':pad(ch.slice(1),t,cd,{type:'sawtooth',cut:700,vol:0.04,out:wet,lfo:0.12});boom(t,{out:wet,vol:0.55});boom(t+cd/2,{out:wet,vol:0.3});
+       for(let k=0;k<cd;k++)pluck(ch[0]+12,t+k,{type:'sawtooth',vol:0.05,dec:0.7,out:dry});break;
+     case'misterio':pad(ch.slice(1),t,cd,{type:'triangle',cut:1600,vol:0.04,out:wet,lfo:4.5});sub(ch[0]-12,t,cd,{out:dry,vol:0.12});
+       for(let k=0;k<4;k++)if(r()<0.8)bell([74,77,79,81,84,86][Math.floor(r()*6)],t+k*2+r()*1.2,{out:echo,vol:0.05});break;
+     case'suspenso':pad(ch.slice(1),t,cd,{type:'sawtooth',cut:600+i*250,vol:0.03,out:wet,lfo:0.2});
+       for(let k=0;k<cd*4;k++)pluck(ch[0]+(k%2?12:0),t+k*0.25,{type:'sawtooth',vol:0.04+0.02*(k%4===0),dec:0.18,out:dry});if(i%2===0)boom(t,{out:wet,vol:0.3});break;
+     case'epica':pad(ch.slice(1),t,cd,{type:'sawtooth',cut:1300,vol:0.035,out:wet,lfo:0.1});sub(ch[0]-12,t,cd,{out:dry,vol:0.12});
+       for(let k=0;k<cd;k++){boom(t+k,{out:wet,vol:k%2?0.18:0.35});if(k%2)boom(t+k+0.5,{out:wet,vol:0.15})}
+       for(let k=0;k<cd*2;k++)if(k%4!==3)pluck(ch[1+(k%3)]+12,t+k*0.5,{type:'triangle',vol:0.05,dec:0.5,out:echo});break;
+     case'tranquila':pad(ch.slice(1),t,cd,{type:'triangle',cut:1400,vol:0.035,out:wet,lfo:0.08});sub(ch[0],t,cd,{out:dry,vol:0.1});
+       for(let k=0;k<cd*2;k++){const seq=[1,2,3,2];pluck(ch[seq[k%4]]+12,t+k*0.5,{type:'sine',vol:0.09,dec:1.8,out:wet})}break;
+    }});
+  const out=await new Promise((res,rej)=>{oc.oncomplete=e=>res(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(res,rej)});
+  // el final se suma al principio para que la pista se repita sin cortes
+  const L=Math.floor(sr*LOOP),fin=new (window.AudioBuffer)({numberOfChannels:2,length:L,sampleRate:sr});
+  for(let c=0;c<2;c++){const a=out.getChannelData(c),d=fin.getChannelData(c);d.set(a.subarray(0,L));for(let i=L;i<a.length;i++)d[i-L]+=a[i];let pk=0;for(let i=0;i<L;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk>0.98)for(let i=0;i<L;i++)d[i]*=0.98/pk}
+  return fin;
+}
+async function getMusicBuffer(sr,ac){
+  const k=settings.musicPreset;
+  if(k==='file'&&settings.musicBlob)return await decodeBuf(ac||getDecodeCtx(),settings.musicBlob);
+  if(!TRACKS[k])return null;
+  const ck=k+'|'+sr;if(!trackCache.has(ck))trackCache.set(ck,renderTrack(k,sr).catch(e=>{trackCache.delete(ck);throw e}));
+  return await trackCache.get(ck);
+}
+const musicPrev={src:null,tok:0};
+function stopMusicPreview(){if(musicPrev.src)try{musicPrev.src.stop()}catch{}musicPrev.src=null;$('#musicPlay').textContent='▶ Escuchar'}
+async function playMusicPreview(){
+  if(engine)return;stopMusicPreview();const ac=getDecodeCtx();ac.resume().catch(()=>{});const tok=++musicPrev.tok;
+  $('#musicPlay').textContent='⏳ Preparando…';
+  try{const buf=await getMusicBuffer(ac.sampleRate,ac);if(tok!==musicPrev.tok||!buf){stopMusicPreview();return}
+    const src=ac.createBufferSource(),g=ac.createGain();src.buffer=buf;src.loop=true;g.gain.value=Math.max(0.15,settings.musicVol);src.connect(g).connect(ac.destination);
+    const t=ac.currentTime;g.gain.setValueAtTime(g.gain.value,t+9);g.gain.linearRampToValueAtTime(0,t+10);src.start(t);src.stop(t+10);
+    src.onended=()=>{if(musicPrev.src===src)stopMusicPreview()};musicPrev.src=src;$('#musicPlay').textContent='■ Detener';
+  }catch(e){console.error(e);stopMusicPreview();toast('No se pudo preparar la música.')}
+}
+$('#makeVideoTop').onclick=()=>{$('#exportBtn').scrollIntoView({behavior:'smooth',block:'center'});if(!engine)runTimeline(true)};
+
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&engine&&engine.record)toast('Regresa a esta pestaña: el video se crea solo mientras está visible.',5000)});
-window.addEventListener('beforeunload',e=>{if(scenes.some(s=>s.kind||s.text)){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',e=>{if(lastSig!==JSON.stringify(projectMeta())){autosave();e.preventDefault();e.returnValue=''}});
 
 /* ---------- app instalable ---------- */
 let installEvt=null;const ib=$('#installBtn');
@@ -691,7 +825,8 @@ if(isIOS&&!standalone)ib.classList.remove('hidden');
 ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.classList.add('hidden')}else if(isIOS)toast('En Safari toca Compartir ⬆️ y luego “Agregar a inicio”.',6000);else toast('Abre el menú del navegador ⋮ y elige “Instalar app”.',6000)};
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-syncSettingsUI();add({});
+syncSettingsUI();
+(async()=>{const ok=await restore();syncSettingsUI();if(ok){draw();toast('Tu proyecto sigue aquí.')}else add({})})();
 })();
 </script>
 </body>
