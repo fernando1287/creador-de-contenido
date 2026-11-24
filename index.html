@@ -158,6 +158,11 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
           </div>
           <label class="check"><input type="checkbox" id="optTransition"> Transiciones suaves entre escenas</label>
           <label class="check"><input type="checkbox" id="optMotion"> Movimiento lento en las fotos (zoom)</label>
+          <div class="set-row"><span class="set-title">Voz para leer el texto</span>
+            <select id="ttsVoice"></select>
+            <button class="smallbtn" id="ttsAll">🔊 Convertir todos los textos a voz</button>
+            <span class="micro">La primera vez descarga la voz (necesita internet). Después funciona sin internet.</span>
+          </div>
           <div class="set-row"><span class="set-title">Música de fondo</span>
             <div class="narration">
               <label class="smallbtn">♫ Elegir música<input id="musicFile" type="file" accept="audio/*" hidden></label>
@@ -193,7 +198,7 @@ const AC=window.AudioContext||window.webkitAudioContext;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const FORMATS={'9:16':[720,1280],'1:1':[720,720],'16:9':[1280,720]};
 const MIMES=['video/mp4;codecs=avc1.42E01F,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicVol:0.25};
+const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicVol:0.25,ttsVoice:(()=>{try{return localStorage.getItem('ttsVoice')||'es_MX-claude-high'}catch{return'es_MX-claude-high'}})()};
 let scenes=[],idc=0,selectedId=null,engine=null,decodeCtx=null,idle={url:'',el:null},idleTimer=null,lastExport=null;
 
 /* ---------- utilidades ---------- */
@@ -255,7 +260,7 @@ function draw(){
    <textarea placeholder="Escribe aquí lo que quieres contar en esta escena...">${esc(s.text)}</textarea>
    <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
   </div>
-  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
+  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
   ${s.audioUrl?fxPanel(s):''}
   ${s.kind==='video'?`<label class="check"><input type="checkbox" class="vaud" ${s.videoAudio?'checked':''}> Usar el sonido original del video</label>`:''}
   <div><div class="labelrow">TIEMPO EN PANTALLA <span class="dur-label">${fmtS(s.duration)}</span></div>
@@ -278,6 +283,7 @@ function draw(){
     q('.rec').onclick=()=>s.recording?stopRecording(s):startRecording(s);
     const af=q('.audioFile');af.onchange=()=>{const f=af.files[0];if(f)setAudio(s,f,f.name)};
     if(s.audioUrl)wireFx(s,el);
+    q('.tts').onclick=()=>textToVoice(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
     if(q('.dictate'))q('.dictate').onclick=()=>toggleDictation(s);
     root.append(el);
@@ -307,6 +313,49 @@ function toggleDictation(s){
   r.onend=()=>{s.dictating=null;const b=root.querySelector(`[data-id="${s.id}"] .dictate`);if(b){b.classList.remove('on');b.textContent='🗣 Dictar'}};
   s.dictating=r;r.start();const b=root.querySelector(`[data-id="${s.id}"] .dictate`);if(b){b.classList.add('on');b.textContent='● Escuchando…'}
 }
+
+/* ---------- texto a voz (Piper, corre en el teléfono) ---------- */
+const VOICE_NAMES={'es_MX-claude-high':'México · Claude (alta calidad)','es_MX-ald-medium':'México · Ald','es_ES-davefx-medium':'España · Davefx','es_ES-sharvard-medium':'España · Sharvard','es_ES-carlfm-x_low':'España · Carlfm (ligera)','es_ES-mls_10246-low':'España · MLS 10246 (ligera)','es_ES-mls_9972-low':'España · MLS 9972 (ligera)','es_AR-daniela-high':'Argentina · Daniela (alta calidad)'};
+let voiceIds=Object.keys(VOICE_NAMES),ttsPromise=null,ttsBusy=false;
+const TTS_URLS=['https://esm.sh/@diffusionstudio/vits-web@1.0.3','https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+esm'];
+function fillVoices(){const sel=$('#ttsVoice');if(!voiceIds.includes(settings.ttsVoice))voiceIds.unshift(settings.ttsVoice);sel.innerHTML=voiceIds.map(v=>`<option value="${esc(v)}">${esc(VOICE_NAMES[v]||v)}</option>`).join('');sel.value=settings.ttsVoice}
+function loadTTS(){
+  if(!ttsPromise)ttsPromise=(async()=>{let err;for(const u of TTS_URLS){try{const m=await import(u);
+      try{const all=await m.voices();const es=Object.keys(all||{}).filter(k=>/^es_/.test(k));if(es.length){voiceIds=es.sort((a,b)=>(b.startsWith('es_MX')-a.startsWith('es_MX'))||a.localeCompare(b));fillVoices()}}catch{}
+      return m}catch(e){err=e}}throw err})().catch(e=>{ttsPromise=null;throw e});
+  return ttsPromise;
+}
+async function synth(text,onState){
+  const tts=await loadTTS(),id=settings.ttsVoice;
+  let stored=[];try{stored=await tts.stored()}catch{}
+  if(!stored.includes(id)){onState('⏳ Descargando voz…');await tts.download(id,p=>{if(p&&p.total)onState(`⏳ Descargando voz ${Math.round(p.loaded*100/p.total)}%`)})}
+  onState('⏳ Creando voz…');
+  return await tts.predict({text,voiceId:id});
+}
+async function textToVoice(s,auto){
+  const btn=()=>root.querySelector(`[data-id="${s.id}"] .tts`),set=t=>{const b=btn();if(b)b.textContent=t};
+  const text=(s.text||'').trim();
+  if(!text){if(!auto)toast('Primero escribe el texto de esta escena.');return false}
+  if(ttsBusy&&!auto)return toast('Espera, ya estoy creando una voz.');
+  if(!auto&&s.audioBlob&&s.audioName!=='Voz del texto'&&!confirm('¿Reemplazar el audio de esta escena por la voz del texto?'))return false;
+  stopVoice();ttsBusy=true;set('⏳ Preparando…');
+  try{
+    const wav=await synth(text,set);
+    await setAudio(s,wav,'Voz del texto');
+    const el=root.querySelector(`[data-id="${s.id}"]`);if(el&&!auto)playVoice(s,el);
+    return true;
+  }catch(e){console.error(e);set('🔊 Texto a voz');toast(navigator.onLine?'No se pudo crear la voz. Prueba con otra voz en Ajustes o con Chrome actualizado.':'Necesitas internet la primera vez para descargar la voz.',5000);return false}
+  finally{ttsBusy=false}
+}
+$('#ttsVoice').onchange=e=>{settings.ttsVoice=e.target.value;try{localStorage.setItem('ttsVoice',settings.ttsVoice)}catch{}};
+$('#ttsAll').onclick=async()=>{
+  if(ttsBusy||engine)return;const list=scenes.filter(s=>s.text.trim()&&!s.audioBlob);
+  if(!list.length)return toast('No hay escenas con texto y sin audio.');
+  const b=$('#ttsAll');b.disabled=true;let ok=0;
+  for(let i=0;i<list.length;i++){b.textContent=`⏳ Escena ${i+1} de ${list.length}…`;if(await textToVoice(list[i],true))ok++;else break}
+  b.disabled=false;b.textContent='🔊 Convertir todos los textos a voz';if(ok)toast(`Listo: ${ok} escena${ok>1?'s':''} con voz.`);
+};
+fillVoices();
 
 /* ---------- efectos de voz ---------- */
 const PRESETS=[
@@ -573,7 +622,7 @@ $('#saveProject').onclick=async()=>{
   if(!scenes.length)return toast('No hay nada que guardar todavía.');
   toast('Guardando proyecto…',6000);
   try{
-    const payload={app:'creador-de-contenido',version:2,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,music:settings.musicBlob?await blobToData(settings.musicBlob):''},
+    const payload={app:'creador-de-contenido',version:2,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,ttsVoice:settings.ttsVoice,music:settings.musicBlob?await blobToData(settings.musicBlob):''},
       scenes:await Promise.all(scenes.map(async s=>({kind:s.kind,media:s.mediaBlob?await blobToData(s.mediaBlob):'',mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,fx:s.fx,audio:s.audioBlob?await blobToData(s.audioBlob):'',audioName:s.audioName,audioDur:s.audioDur})))};
     const b=new Blob([JSON.stringify(payload)],{type:'application/json'}),a=document.createElement('a'),u=URL.createObjectURL(b);
     a.href=u;a.download='mi_proyecto_de_contenido.json';a.click();setTimeout(()=>revoke(u),60000);
@@ -588,7 +637,7 @@ $('#projectFile').onchange=async e=>{
     scenes.forEach(s=>{revoke(s.mediaUrl);revoke(s.audioUrl)});scenes=[];
     const st=data.settings||{};
     if(FORMATS[st.format])settings.format=st.format;if(st.textSize)settings.textSize=+st.textSize;
-    if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;
+    if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;fillVoices();
     settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';
     for(const x of data.scenes){
       const d={text:x.text,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
