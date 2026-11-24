@@ -148,6 +148,9 @@ a.smallbtn{color:inherit;text-decoration:none}
 .cut-foot .btn{margin-left:auto}
 .cutthis{width:100%;justify-content:center}
 .fx.mus summary span{color:#ffb86b}
+.nah{border:1px solid #6b4a2a;background:linear-gradient(120deg,#2a1f14,#10161e);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.nah .labelrow{color:#ffcf8a}
+.smallbtn.nahon{background:#6b4a2a;border-color:#a8743d;color:#ffe2b8}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static;grid-row:1}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
 @media(max-width:580px){.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
@@ -251,7 +254,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <h3>Mi proyecto <span id="saveState"></span></h3>
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 10 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 11 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -309,7 +312,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textAlt:d.textAlt||'',textAltFor:d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,voiceLang:d.voiceLang==='nah'?'nah':'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textAlt:d.textAlt||'',textAltFor:d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -333,7 +336,7 @@ async function setAudio(s,blob,name){
 }
 function removeAudio(s){revoke(s.audioUrl);s.audioBlob=null;s.audioUrl='';s.audioName='';s.audioDur=0;draw()}
 function move(i,d){const n=i+d;if(n<0||n>=scenes.length)return;[scenes[i],scenes[n]]=[scenes[n],scenes[i]];draw()}
-function duplicate(i){const s=scenes[i],c=makeScene({kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
+function duplicate(i){const s=scenes[i],c=makeScene({kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
 function select(id){if(selectedId===id)return;selectedId=id;root.querySelectorAll('.scene').forEach(e=>e.classList.toggle('sel',+e.dataset.id===id));renderIdleSoon()}
 function videoRate(s){return s.kind==='video'&&s.speedFit&&s.mediaDur?Math.max(0.1,Math.min(16,s.mediaDur/s.duration)):1}
 function durNote(s){
@@ -374,7 +377,8 @@ function draw(){
    <textarea placeholder="Escribe aquí lo que quieres contar en esta escena...">${esc(s.text)}</textarea>
    <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<button class="smallbtn lang" title="Traducir el texto">${s.lang==='en'?'🇲🇽 Español':'🇺🇸 Inglés'}</button>${SR?`<button class="smallbtn talkEn" title="Hablas en español y queda en inglés">🗣→🇺🇸</button>`:''}<select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
   </div>
-  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
+  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><button class="smallbtn nahBtn ${s.voiceLang==='nah'?'nahon':''}" title="El texto queda en español y la voz habla náhuatl">🪶 Voz en náhuatl</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
+  ${s.voiceLang==='nah'?nahBox(s):''}
   ${s.audioUrl?fxPanel(s):''}
   ${musPanel(s)}
   ${s.kind==='video'?`<label class="check"><input type="checkbox" class="vaud" ${s.videoAudio?'checked':''}> Usar el sonido original del video</label>`:''}
@@ -407,6 +411,8 @@ function draw(){
     if(s.audioUrl)wireFx(s,el);
     wireMus(s,el);
     q('.tts').onclick=()=>textToVoice(s);
+    q('.nahBtn').onclick=()=>{s.voiceLang=s.voiceLang==='nah'?'':'nah';draw();if(s.voiceLang==='nah')setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t)t.focus()},50)};
+    if(q('.nahText')){q('.nahText').oninput=e=>{s.voiceText=e.target.value};q('.nahGo').onclick=()=>textToVoice(s);q('.nahOff').onclick=()=>{s.voiceLang='';draw()}}
     q('.lang').onclick=()=>switchLang(s,s.lang==='en'?'es':'en');
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
@@ -457,16 +463,36 @@ async function synth(text,onState,lang){
   onState('⏳ Creando voz…');
   return await tts.predict({text,voiceId:id});
 }
+function nahBox(s){return`<div class="nah"><div class="labelrow">🪶 LO QUE DICE LA VOZ EN NÁHUATL <span>el texto en pantalla sigue en español</span></div>
+<textarea class="nahText" placeholder="Ejemplo: Niltze! Nican tlamachiliztli de los mexicah…">${esc(s.voiceText)}</textarea>
+<div class="row" style="margin:0"><button class="smallbtn nahGo">🔊 Crear voz en náhuatl</button><button class="smallbtn nahOff">✕ Quitar náhuatl</button></div>
+<span class="micro">La voz automática lee el náhuatl con acento del español de México. Para que suene auténtico, graba a alguien que hable náhuatl con 🎙 Grabar voz. Puedes pedirle a Claude que te traduzca el texto.</span></div>`}
+// Prepara la escritura del náhuatl para que la voz en español la pronuncie lo mejor posible
+function nahSpeech(t){
+  const acc={a:'á',e:'é',i:'í',o:'ó',u:'ú'};
+  return t.replace(/[A-Za-zÁÉÍÓÚáéíóúĀĒĪŌāēīō]+/g,w=>{
+    let x=w.normalize('NFD').replace(/[̄]/g,'').normalize('NFC');           // quita vocales largas (ā → a)
+    const lower=x.toLowerCase();
+    x=x.replace(/ll/g,'l l').replace(/LL/g,'L L').replace(/x/g,'sh').replace(/X/g,'Sh'); // calli = cal-li, x = sh
+    if(/[áéíóú]/i.test(x)||x.length<4)return x;
+    // en náhuatl el acento va en la penúltima sílaba; si la palabra termina en consonante (tl, c, z…) se marca
+    if(/[aeiouns]$/i.test(lower))return x;
+    const mask=x.toLowerCase().replace(/(hu|qu|cu)(?=[aeio])/g,m=>m[0]+'#').replace(/uh/g,'#h');
+    const idx=[];for(let i=0;i<mask.length;i++)if('aeiou'.includes(mask[i]))idx.push(i);
+    if(idx.length<2)return x;const k=idx[idx.length-2],ch=x[k];const a=acc[ch.toLowerCase()];
+    return x.slice(0,k)+(ch===ch.toUpperCase()?a.toUpperCase():a)+x.slice(k+1);
+  });
+}
 async function textToVoice(s,auto){
   const btn=()=>root.querySelector(`[data-id="${s.id}"] .tts`),set=t=>{const b=btn();if(b)b.textContent=t};
-  const text=(s.text||'').trim();
-  if(!text){if(!auto)toast('Primero escribe el texto de esta escena.');return false}
+  const nah=s.voiceLang==='nah',text=(nah?s.voiceText:s.text||'').trim(),aname=nah?'Voz en náhuatl':'Voz del texto';
+  if(!text){if(!auto)toast(nah?'Escribe primero lo que dirá la voz en náhuatl.':'Primero escribe el texto de esta escena.');return false}
   if(ttsBusy&&!auto)return toast('Espera, ya estoy creando una voz.');
-  if(!auto&&s.audioBlob&&s.audioName!=='Voz del texto'&&!confirm('¿Reemplazar el audio de esta escena por la voz del texto?'))return false;
+  if(!auto&&s.audioBlob&&s.audioName!=='Voz del texto'&&s.audioName!=='Voz en náhuatl'&&!confirm('¿Reemplazar el audio de esta escena por la voz automática?'))return false;
   stopVoice();ttsBusy=true;set('⏳ Preparando…');
   try{
-    const wav=await synth(text,set,s.lang);
-    await setAudio(s,wav,'Voz del texto');
+    const wav=await synth(nah?nahSpeech(text):text,set,nah?'es':s.lang);
+    await setAudio(s,wav,aname);
     const el=root.querySelector(`[data-id="${s.id}"]`);if(el&&!auto)playVoice(s,el);
     return true;
   }catch(e){console.error(e);set('🔊 Texto a voz');toast(navigator.onLine?'No se pudo crear la voz. Prueba con otra voz en Ajustes o con Chrome actualizado.':'Necesitas internet la primera vez para descargar la voz.',5000);return false}
@@ -531,7 +557,7 @@ async function allLang(to){
 $('#allEn').onclick=()=>allLang('en');$('#allEs').onclick=()=>allLang('es');
 $('#ttsVoice').onchange=e=>{settings.ttsVoice=e.target.value;try{localStorage.setItem('ttsVoice',settings.ttsVoice)}catch{}};
 $('#ttsAll').onclick=async()=>{
-  if(ttsBusy||engine)return;const list=scenes.filter(s=>s.text.trim()&&!s.audioBlob);
+  if(ttsBusy||engine)return;const list=scenes.filter(s=>(s.voiceLang==='nah'?s.voiceText:s.text).trim()&&!s.audioBlob);
   if(!list.length)return toast('No hay escenas con texto y sin audio.');
   const b=$('#ttsAll');b.disabled=true;let ok=0;
   for(let i=0;i<list.length;i++){b.textContent=`⏳ Escena ${i+1} de ${list.length}…`;if(await textToVoice(list[i],true))ok++;else break}
@@ -816,7 +842,7 @@ function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blo
 function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
 async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
 function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,ttsVoiceEn:settings.ttsVoiceEn,music:bid(settings.musicBlob)},
-  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
 let saving=false;
 async function autosave(){
   if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
@@ -875,7 +901,7 @@ $('#projectFile').onchange=async e=>{
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;fillVoices();
     settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
     for(const x of data.scenes){
-      const d={music:x.music,musicVol:x.musicVol,musicName:x.musicName,musicBlob:x.musicFile&&x.musicFile.startsWith('data:')?dataToBlob(x.musicFile):null,clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
+      const d={voiceLang:x.voiceLang,voiceText:x.voiceText,music:x.music,musicVol:x.musicVol,musicName:x.musicName,musicBlob:x.musicFile&&x.musicFile.startsWith('data:')?dataToBlob(x.musicFile):null,clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
       const media=x.media||x.image;
       if(media){d.mediaBlob=dataToBlob(media);d.kind=x.kind||(d.mediaBlob.type.startsWith('video/')?'video':'image')}
       if(x.audio)d.audioBlob=dataToBlob(x.audio);else{d.audioName='';d.audioDur=0}
