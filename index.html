@@ -147,6 +147,7 @@ a.smallbtn{color:inherit;text-decoration:none}
 .cut-foot{position:sticky;bottom:-16px;background:var(--panel);display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 0 4px;border-top:1px solid var(--line)}
 .cut-foot .btn{margin-left:auto}
 .cutthis{width:100%;justify-content:center}
+.fx.mus summary span{color:#ffb86b}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static;grid-row:1}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
 @media(max-width:580px){.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
@@ -206,14 +207,14 @@ a.smallbtn{color:inherit;text-decoration:none}
             <button class="smallbtn" id="ttsAll">🔊 Convertir todos los textos a voz</button>
             <span class="micro">La primera vez descarga la voz (necesita internet). Después funciona sin internet.</span>
           </div>
-          <div class="set-row"><span class="set-title">Música de fondo</span>
+          <div class="set-row"><span class="set-title">Música de fondo (para todo el video)</span>
             <div class="chips" id="musicChips"></div>
             <div class="narration">
               <button class="smallbtn" id="musicPlay">▶ Escuchar</button>
               <label class="smallbtn">♫ Usar mi música<input id="musicFile" type="file" accept="audio/*" hidden></label>
               <span class="audio-name" id="musicName"></span>
             </div>
-            <span class="micro">Suena despacito debajo del video y baja sola cuando hay voz.</span>
+            <span class="micro">Suena despacito debajo del video y baja sola cuando hay voz. En cada escena puedes poner otra música o cambiarle el volumen.</span>
             <div class="vol"><span class="micro">Volumen</span><input type="range" id="musicVol" min="0" max="1" step="0.05"></div>
           </div>
         </div>
@@ -250,7 +251,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <h3>Mi proyecto <span id="saveState"></span></h3>
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 9 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 10 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -308,7 +309,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textAlt:d.textAlt||'',textAltFor:d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textAlt:d.textAlt||'',textAltFor:d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -332,7 +333,7 @@ async function setAudio(s,blob,name){
 }
 function removeAudio(s){revoke(s.audioUrl);s.audioBlob=null;s.audioUrl='';s.audioName='';s.audioDur=0;draw()}
 function move(i,d){const n=i+d;if(n<0||n>=scenes.length)return;[scenes[i],scenes[n]]=[scenes[n],scenes[i]];draw()}
-function duplicate(i){const s=scenes[i],c=makeScene({kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
+function duplicate(i){const s=scenes[i],c=makeScene({kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
 function select(id){if(selectedId===id)return;selectedId=id;root.querySelectorAll('.scene').forEach(e=>e.classList.toggle('sel',+e.dataset.id===id));renderIdleSoon()}
 function videoRate(s){return s.kind==='video'&&s.speedFit&&s.mediaDur?Math.max(0.1,Math.min(16,s.mediaDur/s.duration)):1}
 function durNote(s){
@@ -375,6 +376,7 @@ function draw(){
   </div>
   <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
   ${s.audioUrl?fxPanel(s):''}
+  ${musPanel(s)}
   ${s.kind==='video'?`<label class="check"><input type="checkbox" class="vaud" ${s.videoAudio?'checked':''}> Usar el sonido original del video</label>`:''}
   <div><div class="labelrow">TIEMPO EN PANTALLA <span class="dur-label">${fmtS(s.duration)}</span></div>
    <div class="duration"><button class="stepbtn dminus" title="Menos tiempo">−</button><input class="dur-number" type="number" min="0.5" max="600" step="0.1" value="${s.duration}"><button class="stepbtn dplus" title="Más tiempo">+</button><input class="range" type="range" min="1" max="60" step="0.5" value="${Math.min(s.duration,60)}">${fitTarget?`<button class="smallbtn fitdur" title="Igualar a la duración del audio o video">⏱ ${fmtS(fitTarget)}</button>`:''}</div>
@@ -403,6 +405,7 @@ function draw(){
     q('.rec').onclick=()=>s.recording?stopRecording(s):startRecording(s);
     const af=q('.audioFile');af.onchange=()=>{const f=af.files[0];if(f)setAudio(s,f,f.name)};
     if(s.audioUrl)wireFx(s,el);
+    wireMus(s,el);
     q('.tts').onclick=()=>textToVoice(s);
     q('.lang').onclick=()=>switchLang(s,s.lang==='en'?'es':'en');
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
@@ -720,10 +723,15 @@ async function runTimeline(record){
       if(s.audioBlob){try{nb=await getVoiceBuffer(s)}catch(e){console.warn('audio',e);toast(`No se pudo leer el audio de la escena ${i+1}.`)}}
       items.push({s,m,nb});
     }
-    let musicBuf=null;if(!run.stop){try{musicBuf=await getMusicBuffer(ac.sampleRate,ac)}catch(e){console.warn(e);toast('No se pudo preparar la música de fondo.')}}
+    const mBufs=new Map();for(const it of items){if(run.stop)break;const sm=sceneMusic(it.s);it.sm=sm;if(sm&&!mBufs.has(sm.key)){setStatus('Preparando música…');try{mBufs.set(sm.key,await trackBuffer(sm,ac))}catch(e){console.warn(e);mBufs.set(sm.key,null);toast('No se pudo preparar una de las músicas.')}}}
     if(run.stop)throw'stop';
     const total=items.reduce((a,x)=>a+x.s.duration,0);
-    let musicGain=null;if(musicBuf){const g=ac.createGain();musicGain=g;g.connect(out);musicSrc=ac.createBufferSource();musicSrc.buffer=musicBuf;musicSrc.loop=true;musicSrc.connect(g);const t=ac.currentTime+0.05;g.gain.setValueAtTime(settings.musicVol,t);if(total>2){g.gain.setValueAtTime(settings.musicVol,t+total-1.2);g.gain.linearRampToValueAtTime(0,t+total)}musicSrc.start(t)}
+    let mus=null;
+    const musSwitch=(it,isLast)=>{const sm=it.sm,now=ac.currentTime,buf=sm&&mBufs.get(sm.key);
+      if(mus&&(!sm||!buf||mus.key!==sm.key)){const o=mus;o.g.gain.cancelScheduledValues(now);o.g.gain.setValueAtTime(o.g.gain.value,now);o.g.gain.linearRampToValueAtTime(0,now+0.6);try{o.src.stop(now+0.7)}catch{}mus=null}
+      if(sm&&buf&&!mus){const g=ac.createGain();g.gain.value=0;g.connect(out);const src=ac.createBufferSource();src.buffer=buf;src.loop=true;src.connect(g);src.start(now);g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(sm.vol,now+(passed?0.6:0.3));mus={key:sm.key,src,g,vol:sm.vol}}
+      else if(mus){mus.vol=sm.vol;mus.g.gain.cancelScheduledValues(now);mus.g.gain.setValueAtTime(mus.g.gain.value,now);mus.g.gain.linearRampToValueAtTime(sm.vol,now+0.4)}
+      if(mus&&isLast){const d=it.s.duration;if(d>1.5){mus.g.gain.setValueAtTime(mus.vol,now+d-1.2);mus.g.gain.linearRampToValueAtTime(0,now+d)}}};
     let parts=[],mime='',done=null;
     if(record){
       stream=canvas.captureStream(30);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
@@ -736,17 +744,17 @@ async function runTimeline(record){
     setStatus(record?'Creando video… 0%':'');
     let passed=0;
     for(let i=0;i<items.length&&!run.stop;i++){
-      const {s,m,nb}=items[i];let ns=null;
+      const {s,m,nb}=items[i];let ns=null;musSwitch(items[i],i===items.length-1);
       if(m&&s.kind==='video'){m.muted=!s.videoAudio;const r=videoRate(s);try{m.preservesPitch=true;m.defaultPlaybackRate=r;m.playbackRate=r}catch{}await seekTo(m,s.clipStart||0);try{await m.play()}catch{m.muted=true;try{await m.play()}catch{}}}
-      if(nb){ns=ac.createBufferSource();ns.buffer=nb;ns.connect(out);ns.start();if(musicGain)musicGain.gain.setTargetAtTime(settings.musicVol*0.4,ac.currentTime,0.15)}
+      if(nb){ns=ac.createBufferSource();ns.buffer=nb;ns.connect(out);ns.start();if(mus)mus.g.gain.setTargetAtTime(mus.vol*0.4,ac.currentTime,0.15)}
       const t0=performance.now(),dur=s.duration;
       const clipEnd=(s.clipStart||0)+(s.mediaDur||1e9);
       while(!run.stop){const t=(performance.now()-t0)/1000;if(t>=dur)break;if(m&&s.kind==='video'&&!m.paused&&m.currentTime>=clipEnd-0.03)m.pause();drawScene(ctx,W,H,s,m,t,{index:i});progress((passed+t)/total,passed+t,total,record);await sleep(1000/30)}
-      if(ns){try{ns.stop()}catch{}if(musicGain&&i<items.length-1)musicGain.gain.setTargetAtTime(settings.musicVol,ac.currentTime,0.3)}
+      if(ns){try{ns.stop()}catch{}if(mus&&i<items.length-1)mus.g.gain.setTargetAtTime(mus.vol,ac.currentTime,0.3)}
       if(m&&s.kind==='video')m.pause();
       passed+=dur;
     }
-    if(musicSrc)try{musicSrc.stop()}catch{}
+    if(mus)try{mus.src.stop()}catch{}
     if(rec){await sleep(120);rec.stop();await done;
       if(!run.stop)finishExport(parts,mime||rec.mimeType||'video/webm',total);else setStatus('Exportación cancelada.')}
     else setStatus('');
@@ -796,9 +804,10 @@ $('#formatSeg').onclick=e=>{const v=e.target.dataset.v;if(!v||engine)return;sett
 $('#sizeSeg').onclick=e=>{const v=e.target.dataset.v;if(!v)return;settings.textSize=+v;syncSettingsUI();renderIdleSoon()};
 $('#optTransition').onchange=e=>settings.transition=e.target.checked;
 $('#optMotion').onchange=e=>settings.motion=e.target.checked;
-$('#musicVol').oninput=e=>settings.musicVol=+e.target.value;
-$('#musicFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;settings.musicBlob=f;settings.musicName=f.name;settings.musicPreset='file';syncSettingsUI();playMusicPreview()};
-$('#musicChips').onclick=e=>{const k=e.target.dataset&&e.target.dataset.m;if(k===undefined)return;if(k==='file'&&!settings.musicBlob)return;settings.musicPreset=k;syncSettingsUI();if(k)playMusicPreview();else stopMusicPreview()};
+$('#musicVol').oninput=e=>{settings.musicVol=+e.target.value;refreshMusLabels()};
+function refreshMusLabels(){scenes.forEach(x=>{const e=root.querySelector(`[data-id="${x.id}"] .mus-sum`);if(e)e.textContent=musLabel(x)})}
+$('#musicFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;settings.musicBlob=f;settings.musicName=f.name;settings.musicPreset='file';syncSettingsUI();refreshMusLabels();playMusicPreview()};
+$('#musicChips').onclick=e=>{const k=e.target.dataset&&e.target.dataset.m;if(k===undefined)return;if(k==='file'&&!settings.musicBlob)return;settings.musicPreset=k;syncSettingsUI();refreshMusLabels();if(k)playMusicPreview();else stopMusicPreview()};
 $('#musicPlay').onclick=()=>{if(musicPrev.src){stopMusicPreview();return}playMusicPreview()};
 
 /* ---------- guardar automático (IndexedDB) ---------- */
@@ -807,12 +816,12 @@ function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blo
 function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
 async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
 function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,ttsVoiceEn:settings.ttsVoiceEn,music:bid(settings.musicBlob)},
-  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textAlt:s.textAlt,textAltFor:s.textAltFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
 let saving=false;
 async function autosave(){
   if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
   saving=true;$('#saveState').textContent='Guardando…';
-  const need=new Map();const addB=b=>{if(b)need.set(bid(b),b)};addB(settings.musicBlob);scenes.forEach(x=>{addB(x.mediaBlob);addB(x.audioBlob)});
+  const need=new Map();const addB=b=>{if(b)need.set(bid(b),b)};addB(settings.musicBlob);scenes.forEach(x=>{addB(x.mediaBlob);addB(x.audioBlob);addB(x.musicBlob)});
   try{
     await tx('readwrite',st=>{for(const [k,b] of need)if(!savedKeys.has(k))st.put(b,k);for(const k of savedKeys)if(!need.has(k))st.delete(k);return st.put(meta,'project')});
     savedKeys=new Set(need.keys());lastSig=sig;$('#saveState').textContent='Guardado ✓';
@@ -833,7 +842,7 @@ async function restore(){
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;
     if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;if(st.ttsVoiceEn)settings.ttsVoiceEn=st.ttsVoiceEn;settings.musicBlob=await getB(st.music);settings.musicName=st.musicName||'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');
     if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
-    for(const x of meta.scenes){const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio)};if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
+    for(const x of meta.scenes){const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio),musicBlob:await getB(x.musicFile)};if(d.music==='file'&&!d.musicBlob)d.music='';if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
     selectedId=scenes[0]?.id||null;fillVoices();lastSig=JSON.stringify(projectMeta());$('#saveState').textContent='Guardado ✓';return true;
   }catch(e){console.warn(e);return false}finally{restoring=false}
 }
@@ -847,7 +856,7 @@ $('#saveProject').onclick=async()=>{
     const m=projectMeta(),parts=[];
     const st={...m.settings,music:settings.musicBlob?await blobToData(settings.musicBlob):''};
     parts.push('{"app":"creador-de-contenido","version":3,"settings":',JSON.stringify(st),',"scenes":[');
-    for(let i=0;i<scenes.length;i++){const x=scenes[i],o={...m.scenes[i],media:x.mediaBlob?await blobToData(x.mediaBlob):'',audio:x.audioBlob?await blobToData(x.audioBlob):''};parts.push((i?',':'')+JSON.stringify(o))}
+    for(let i=0;i<scenes.length;i++){const x=scenes[i],o={...m.scenes[i],media:x.mediaBlob?await blobToData(x.mediaBlob):'',audio:x.audioBlob?await blobToData(x.audioBlob):'',musicFile:x.musicBlob?await blobToData(x.musicBlob):''};parts.push((i?',':'')+JSON.stringify(o))}
     parts.push(']}');
     const b=new Blob(parts,{type:'application/json'}),a=document.createElement('a'),u=URL.createObjectURL(b);
     a.href=u;a.download='copia_creador_de_contenido.json';a.click();setTimeout(()=>revoke(u),60000);
@@ -866,7 +875,7 @@ $('#projectFile').onchange=async e=>{
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;fillVoices();
     settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
     for(const x of data.scenes){
-      const d={clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
+      const d={music:x.music,musicVol:x.musicVol,musicName:x.musicName,musicBlob:x.musicFile&&x.musicFile.startsWith('data:')?dataToBlob(x.musicFile):null,clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
       const media=x.media||x.image;
       if(media){d.mediaBlob=dataToBlob(media);d.kind=x.kind||(d.mediaBlob.type.startsWith('video/')?'video':'image')}
       if(x.audio)d.audioBlob=dataToBlob(x.audio);else{d.audioName='';d.audioDur=0}
@@ -925,7 +934,10 @@ async function renderTrack(key,sr){
   const out=await new Promise((res,rej)=>{oc.oncomplete=e=>res(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(res,rej)});
   // el final se suma al principio para que la pista se repita sin cortes
   const L=Math.floor(sr*LOOP),fin=new (window.AudioBuffer)({numberOfChannels:2,length:L,sampleRate:sr});
-  for(let c=0;c<2;c++){const a=out.getChannelData(c),d=fin.getChannelData(c);d.set(a.subarray(0,L));for(let i=L;i<a.length;i++)d[i-L]+=a[i];let pk=0;for(let i=0;i<L;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk>0.98)for(let i=0;i<L;i++)d[i]*=0.98/pk}
+  for(let c=0;c<2;c++){const a=out.getChannelData(c),d=fin.getChannelData(c);d.set(a.subarray(0,L));for(let i=L;i<a.length;i++)d[i-L]+=a[i];}
+  // todas las pistas con el mismo volumen percibido (RMS) y picos suavizados
+  {let sum=0;for(let c=0;c<2;c++){const d=fin.getChannelData(c);for(let i=0;i<L;i++)sum+=d[i]*d[i]}const rms=Math.sqrt(sum/(2*L))||1,k=0.16/rms;
+   for(let c=0;c<2;c++){const d=fin.getChannelData(c);for(let i=0;i<L;i++){const v=d[i]*k;d[i]=Math.abs(v)<0.7?v:Math.sign(v)*(0.7+0.28*Math.tanh((Math.abs(v)-0.7)/0.28))}}}
   return fin;
 }
 async function getMusicBuffer(sr,ac){
@@ -935,15 +947,50 @@ async function getMusicBuffer(sr,ac){
   const ck=k+'|'+sr;if(!trackCache.has(ck))trackCache.set(ck,renderTrack(k,sr).catch(e=>{trackCache.delete(ck);throw e}));
   return await trackCache.get(ck);
 }
-const musicPrev={src:null,tok:0};
-function stopMusicPreview(){if(musicPrev.src)try{musicPrev.src.stop()}catch{}musicPrev.src=null;$('#musicPlay').textContent='▶ Escuchar'}
-async function playMusicPreview(){
+function sceneMusic(s){
+  const vol=s.musicVol!=null?s.musicVol:settings.musicVol;let k=s.music||'';
+  if(k==='none')return null;
+  if(k===''){k=settings.musicPreset;if(k==='file')return settings.musicBlob?{key:'f:'+bid(settings.musicBlob),blob:settings.musicBlob,vol}:null;return TRACKS[k]?{key:k,vol}:null}
+  if(k==='file')return s.musicBlob?{key:'f:'+bid(s.musicBlob),blob:s.musicBlob,vol}:null;
+  return TRACKS[k]?{key:k,vol}:null;
+}
+async function trackBuffer(sm,ac){
+  const sr=ac.sampleRate,ck=sm.key+'|'+sr;
+  if(!trackCache.has(ck))trackCache.set(ck,(sm.blob?decodeBuf(ac,sm.blob):renderTrack(sm.key,sr)).catch(e=>{trackCache.delete(ck);throw e}));
+  return await trackCache.get(ck);
+}
+function musLabel(s){const k=s.music||'';const v=Math.round((s.musicVol!=null?s.musicVol:settings.musicVol)*100)+'%';
+  if(k==='none')return'🔇 Sin música';if(k==='file')return'♫ '+(s.musicName||'Mi canción')+' · '+v;
+  if(k==='')return(settings.musicPreset?'Igual que el video':'Sin música (no hay música general)')+(settings.musicPreset?' · '+v:'');return TRACKS[k].name+' · '+v}
+function musPanel(s){
+  const k=s.music||'',vol=s.musicVol!=null?s.musicVol:settings.musicVol;
+  const chips=[['','🎬 Igual que el video'],['none','🔇 Sin música'],...Object.entries(TRACKS).map(([key,t])=>[key,t.name]),...(s.musicBlob?[['file','♫ '+(s.musicName||'Mi canción')]]:[])];
+  return`<details class="fx mus" ${s.musOpen?'open':''}><summary>🎵 Música de esta escena <span class="mus-sum">${esc(musLabel(s))}</span></summary><div class="fx-body">
+<div class="chips">${chips.map(([key,n])=>`<button class="chip ${k===key?'act':''}" data-mus="${key}">${esc(n)}</button>`).join('')}</div>
+<div class="sl"><div class="sl-top">Volumen de la música <b class="v-mvol">${Math.round(vol*100)}%</b></div><input type="range" class="m-vol" min="0" max="1" step="0.05" value="${vol}"><div class="sl-ends"><span>🔈 Más bajo</span><span>Más alto 🔊</span></div></div>
+<div class="fx-actions"><button class="smallbtn m-play">▶ Escuchar</button><label class="smallbtn">⬆ Subir canción<input class="m-file" type="file" accept="audio/*" hidden></label>${s.musicVol!=null?'<button class="smallbtn m-reset">↺ Volumen normal</button>':''}</div>
+</div></details>`}
+function wireMus(s,el){
+  const q=c=>el.querySelector(c);
+  q('.mus').addEventListener('toggle',e=>s.musOpen=e.target.open);
+  const sum=()=>{q('.mus-sum').textContent=musLabel(s);el.querySelectorAll('[data-mus]').forEach(c=>c.classList.toggle('act',c.dataset.mus===(s.music||'')))};
+  el.querySelectorAll('[data-mus]').forEach(c=>c.onclick=()=>{s.music=c.dataset.mus;sum();if(s.music!=='none'&&sceneMusic(s))playMusicPreview(s);else stopMusicPreview()});
+  const v=q('.m-vol');v.oninput=()=>{s.musicVol=+v.value;q('.v-mvol').textContent=Math.round(s.musicVol*100)+'%';sum();if(musicPrev.g)musicPrev.g.gain.setTargetAtTime(Math.max(0.02,s.musicVol),musicPrev.g.context.currentTime,0.05)};
+  v.onchange=()=>{if(!musicPrev.src&&sceneMusic(s))playMusicPreview(s)};
+  q('.m-play').onclick=()=>{if(musicPrev.src){stopMusicPreview();return}if(!sceneMusic(s))return toast('Esta escena no tiene música. Elige una pista.');playMusicPreview(s)};
+  q('.m-file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;s.musicBlob=f;s.musicName=f.name.replace(/\.\w+$/,'');s.music='file';s.musOpen=true;draw();playMusicPreview(s)};
+  if(q('.m-reset'))q('.m-reset').onclick=()=>{s.musicVol=null;draw()};
+}
+const musicPrev={src:null,tok:0,g:null};
+function stopMusicPreview(){if(musicPrev.src)try{musicPrev.src.stop()}catch{}musicPrev.src=null;musicPrev.g=null;$('#musicPlay').textContent='▶ Escuchar';root.querySelectorAll('.m-play').forEach(b=>b.textContent='▶ Escuchar')}
+async function playMusicPreview(sc){
   if(engine)return;stopMusicPreview();const ac=getDecodeCtx();ac.resume().catch(()=>{});const tok=++musicPrev.tok;
-  $('#musicPlay').textContent='⏳ Preparando…';
-  try{const buf=await getMusicBuffer(ac.sampleRate,ac);if(tok!==musicPrev.tok||!buf){stopMusicPreview();return}
-    const src=ac.createBufferSource(),g=ac.createGain();src.buffer=buf;src.loop=true;g.gain.value=Math.max(0.15,settings.musicVol);src.connect(g).connect(ac.destination);
+  const btn=sc?root.querySelector(`[data-id="${sc.id}"] .m-play`):$('#musicPlay');if(btn)btn.textContent='⏳ Preparando…';
+  try{const sm=sc?sceneMusic(sc):(settings.musicPreset?{key:settings.musicPreset==='file'?'f:'+bid(settings.musicBlob):settings.musicPreset,blob:settings.musicPreset==='file'?settings.musicBlob:null,vol:settings.musicVol}:null);
+    if(!sm){stopMusicPreview();return}const buf=await trackBuffer(sm,ac);if(tok!==musicPrev.tok||!buf){stopMusicPreview();return}
+    const src=ac.createBufferSource(),g=ac.createGain();src.buffer=buf;src.loop=true;g.gain.value=Math.max(0.02,sc?sm.vol:Math.max(0.15,sm.vol));src.connect(g).connect(ac.destination);
     const t=ac.currentTime;g.gain.setValueAtTime(g.gain.value,t+9);g.gain.linearRampToValueAtTime(0,t+10);src.start(t);src.stop(t+10);
-    src.onended=()=>{if(musicPrev.src===src)stopMusicPreview()};musicPrev.src=src;$('#musicPlay').textContent='■ Detener';
+    src.onended=()=>{if(musicPrev.src===src)stopMusicPreview()};musicPrev.src=src;musicPrev.g=sc?g:null;if(btn)btn.textContent='■ Detener';
   }catch(e){console.error(e);stopMusicPreview();toast('No se pudo preparar la música.')}
 }
 /* ---------- conexión con el Portal Madre de Canales ---------- */
