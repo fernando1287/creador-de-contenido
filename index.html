@@ -227,6 +227,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <h3>Mi proyecto <span id="saveState"></span></h3>
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 7 · 23 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -916,6 +917,7 @@ $('#useScript').onclick=()=>{
   selectedId=scenes[0]?.id;draw();toast(`Listo: ${parts.length} escenas. Ahora agrega una foto o video a cada una.`,4500);
 };
 initPortalUI();
+$('#updBtn').onclick=e=>window.checkUpdate&&window.checkUpdate(e.target);
 $('#makeVideoTop').onclick=()=>{$('#exportBtn').scrollIntoView({behavior:'smooth',block:'center'});if(!engine)runTimeline(true)};
 
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&engine&&engine.record)toast('Regresa a esta pestaña: el video se crea solo mientras está visible.',5000)});
@@ -929,7 +931,21 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=
 window.addEventListener('appinstalled',()=>{ib.classList.add('hidden');toast('¡App instalada! Búscala en tu pantalla de inicio.')});
 if(isIOS&&!standalone&&!inPortal)ib.classList.remove('hidden');
 ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.classList.add('hidden')}else if(isIOS)toast('En Safari toca Compartir ⬆️ y luego “Agregar a inicio”.',6000);else toast('Abre el menú del navegador ⋮ y elige “Instalar app”.',6000)};
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+/* ---------- actualizaciones automáticas ---------- */
+(()=>{if(!('serviceWorker'in navigator)||!location.protocol.startsWith('http'))return;
+ const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
+ navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+   const chk=()=>reg.update().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});setInterval(chk,15*60*1000);
+ }).catch(()=>{});
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!hadCtrl||reloading)return;
+   if((engine||scenes.some(x=>x.recording))){window.__pendingReload=true;return}reloading=true;Promise.resolve(autosave()).finally(()=>location.reload())});
+ window.checkUpdate=async btn=>{if(btn)btn.textContent='Buscando…';
+   try{await Promise.resolve(autosave())}catch{}
+   try{const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.update().catch(()=>{})));const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch{}
+   location.reload()};
+})();
+
 
 syncSettingsUI();
 (async()=>{const ok=await restore();syncSettingsUI();if(ok){draw();toast('Tu proyecto sigue aquí.')}else add({})})();
