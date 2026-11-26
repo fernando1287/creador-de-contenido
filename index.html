@@ -34,6 +34,10 @@ select{background:#10161e;color:var(--text);border:1px solid var(--line);border-
 .step{color:var(--acc);font-size:12px;font-weight:750;letter-spacing:.08em}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:20px;align-items:start}
 .scenes{display:grid;gap:13px}
+.iconbtn.lock.on{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);border-color:transparent}
+.scene.locked{border-color:#ff9a3c88}
+.scene.locked .scene-body>*:not(.lockbar){pointer-events:none;opacity:.6}
+.lockbar{grid-column:1/-1;font-size:12px;font-weight:600;color:#ffb27a;background:#2a1c14;border:1px solid #ff9a3c55;border-radius:10px;padding:8px 10px}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s}
 .scene.sel{border-color:#b8476a;box-shadow:0 0 0 1px #b8476a inset}
 .scene-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;gap:8px}
@@ -319,7 +323,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 30 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 31 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -406,7 +410,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,motion:d.motion&&Array.isArray(d.motion.keys)?{keys:[...d.motion.keys],amt:+d.motion.amt||1}:null,movOpen:false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,locked:!!d.locked,motion:d.motion&&Array.isArray(d.motion.keys)?{keys:[...d.motion.keys],amt:+d.motion.amt||1}:null,movOpen:false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -460,11 +464,11 @@ function draw(){
   root.innerHTML='';
   if(!scenes.length){root.innerHTML='<div class="empty-list">No hay escenas. Toca <b>＋ Agregar escena</b> o <b>Cargar varias</b>.</div>'}
   scenes.forEach((s,i)=>{
-    const el=document.createElement('article');el.className='scene'+(s.id===selectedId?' sel':' collapsed');el.dataset.id=s.id;
+    const el=document.createElement('article');el.className='scene'+(s.id===selectedId?' sel':' collapsed')+(s.locked?' locked':'');el.dataset.id=s.id;
     const thumb=s.kind==='image'?`<img src="${s.mediaUrl}" alt="">`:s.kind==='video'?`<video src="${s.mediaUrl}#t=${((s.clipStart||0)+0.1).toFixed(2)}" muted playsinline preload="metadata"></video><span class="vid">${s.clip?`✂️ ${fmtD(s.clipStart)}–${fmtD(s.clipStart+s.mediaDur)}`:'🎬 '+(s.mediaDur?fmtS(s.mediaDur):'Video')}${s.mediaBlob&&s.mediaBlob.size>OPT_BYTES?' · ⚠ '+mbs(s.mediaBlob.size):''}</span>`:'';
     const fitTarget=Math.max(s.audioDur||0,s.kind==='video'?s.mediaDur||0:0);
     el.innerHTML=`<div class="scene-head"><div class="scene-label"><span class="num">${String(i+1).padStart(2,'0')}</span>Escena ${i+1}${s.kind?`<span class="badge">${s.kind==='video'?'🎬 Video':'📷 Foto'}</span>`:''}</div>
-${miniHead(s)}<div class="scene-tools"><button class="iconbtn up" title="Subir escena">↑</button><button class="iconbtn down" title="Bajar escena">↓</button><button class="iconbtn dup" title="Duplicar escena">⧉</button><button class="iconbtn delete" title="Eliminar escena">✕</button></div></div>
+${miniHead(s)}<div class="scene-tools"><button class="iconbtn lock${s.locked?' on':''}" title="${s.locked?'Escena con candado: toca para desbloquear':'Ponerle candado a esta escena'}">${s.locked?'🔒':'🔓'}</button><button class="iconbtn up" title="Subir escena">↑</button><button class="iconbtn down" title="Bajar escena">↓</button><button class="iconbtn dup" title="Duplicar escena">⧉</button><button class="iconbtn delete" title="Eliminar escena">✕</button></div></div>
 <div class="scene-body">
  <div class="media-col">
   <label class="drop"><input class="mediaFile" type="file" accept="image/*,video/*"><div class="placeholder">＋<strong>Foto o video</strong><span class="micro">toca para cargar</span></div>${thumb}${s.kind?'<span class="change">Cambiar</span>':''}</label>
@@ -506,7 +510,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn up" title="Subir e
     dn.onchange=()=>setD(dn.value);dn.oninput=()=>{if(dn.value!=='')setD(dn.value)};rg.oninput=()=>setD(rg.value);
     if(q('.fitdur'))q('.fitdur').onclick=()=>setD(Math.ceil(fitTarget*10)/10);
     q('.delete').onclick=()=>{if((s.kind||s.text||s.audioUrl)&&!confirm(`¿Eliminar la escena ${i+1}?`))return;if(s.recording)stopRecording(s);if(s.dictating)s.dictating.stop();revoke(s.mediaUrl);revoke(s.audioUrl);scenes=scenes.filter(x=>x.id!==s.id);if(selectedId===s.id)selectedId=scenes[Math.min(i,scenes.length-1)]?.id||null;draw()};
-    q('.up').onclick=()=>move(i,-1);q('.down').onclick=()=>move(i,1);q('.dup').onclick=()=>duplicate(i);
+    q('.up').onclick=()=>move(i,1);q('.down').onclick=()=>move(i,-1);q('.dup').onclick=()=>duplicate(i);
     q('.rec').onclick=()=>s.recording?stopRecording(s):startRecording(s);
     const af=q('.audioFile');af.onchange=()=>{const f=af.files[0];if(f)setAudio(s,f,f.name)};
     if(s.audioUrl)wireFx(s,el);
@@ -519,7 +523,10 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn up" title="Subir e
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
     if(q('.dictate'))q('.dictate').onclick=()=>toggleDictation(s);
-    root.append(el);
+    q('.lock').onclick=e=>{e.stopPropagation();s.locked=!s.locked;draw();toast(s.locked?`🔒 Escena ${i+1} con candado: ya no se puede cambiar`:`🔓 Escena ${i+1} desbloqueada`)};
+    if(s.locked){el.querySelectorAll('.scene-body input,.scene-body select,.scene-body textarea,.scene-body button,.scene-head .delete').forEach(x=>{x.disabled=true});
+      const body=q('.scene-body');if(body)body.insertAdjacentHTML('afterbegin',`<div class="lockbar">🔒 Esta escena tiene candado. Toca el candado de arriba para cambiarla.</div>`)}
+    root.prepend(el);
   });
   updateTotals();renderIdleSoon();
 }
@@ -1004,7 +1011,7 @@ function wireLay(s,el){
 // arrastrar capas con el dedo en la vista previa
 (()=>{let drag=null;
   const pos=e=>{const r=canvas.getBoundingClientRect(),W=canvas.width,H=canvas.height,k=Math.min(r.width/W,r.height/H),ox=(r.width-W*k)/2,oy=(r.height-H*k)/2;return{x:(e.clientX-r.left-ox)/k,y:(e.clientY-r.top-oy)/k,W,H}};
-  canvas.addEventListener('pointerdown',e=>{if(engine||!idleScene||!idleScene.layers.length)return;const p=pos(e);
+  canvas.addEventListener('pointerdown',e=>{if(engine||!idleScene||idleScene.locked||!idleScene.layers.length)return;const p=pos(e);
     for(let i=idleScene.layers.length-1;i>=0;i--){const l=idleScene.layers[i],src=layerSrc(l);if(!src)continue;const w=l.size*p.W,h=w*src.height/src.width;
       if(Math.abs(p.x-l.x*p.W)<=w/2&&Math.abs(p.y-l.y*p.H)<=h/2){drag={l,s:idleScene,dx:p.x-l.x*p.W,dy:p.y-l.y*p.H};canvas.setPointerCapture(e.pointerId);e.preventDefault();break}}});
   canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=pos(e);drag.l.x=Math.max(0,Math.min(1,(p.x-drag.dx)/p.W));drag.l.y=Math.max(0,Math.min(1,(p.y-drag.dy)/p.H));
@@ -1199,7 +1206,7 @@ $('#playPreview').onclick=()=>{if(engine){if(!engine.record)engine.stop=true;ret
 $('#exportBtn').onclick=()=>{if(engine){if(engine.record)engine.stop=true;return}runTimeline(true)};
 
 /* ---------- agregar ---------- */
-$('#addScene').onclick=()=>{add();root.lastElementChild.scrollIntoView({behavior:'smooth',block:'center'})};
+$('#addScene').onclick=()=>{add();root.firstElementChild.scrollIntoView({behavior:'smooth',block:'center'})};
 $('#addMany').onchange=async e=>{
   const files=[...e.target.files].filter(f=>(f.type||'').startsWith('image/')||isVideoFile(f));e.target.value='';
   if(!files.length)return;toast(`Agregando ${files.length} archivo${files.length>1?'s':''}…`);
@@ -1231,7 +1238,7 @@ function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blo
 function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
 async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
 function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,ttsVoiceEn:settings.ttsVoiceEn,music:bid(settings.musicBlob)},
-  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,motion:s.motion,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,motion:s.motion,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),locked:!!s.locked,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
 let saving=false;
 async function autosave(){
   if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
@@ -1266,7 +1273,7 @@ async function applyMeta(meta){
     for(let x of meta.scenes){if(x.lang&&x.lang!=='es'&&x.lang!=='en'){x={...x,text:x.textEs||x.text,lang:'es'}}
       const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio),musicBlob:await getB(x.musicFile)};d.layers=[];for(const L of (x.layers||[])){const b=await getB(L.file);if(b)d.layers.push({...L,blob:b})}if(d.music==='file'&&!d.musicBlob)d.music='';if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
     if(!scenes.length)scenes.push(makeScene());
-    selectedId=scenes[0]?.id||null;fillVoices();
+    selectedId=scenes[scenes.length-1]?.id||null;fillVoices();
 }
 $('#newProject').onclick=()=>projNew();
 
