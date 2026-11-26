@@ -85,6 +85,7 @@ textarea:focus,input:focus,select:focus{border-color:#ff7a93;outline:none}
 .layer-head b{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lgrid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}.lgrid2 label{font-size:11px;color:var(--muted);display:grid;gap:2px}.lgrid2 input[type=range]{width:100%;accent-color:var(--acc)}
 .fx.lay summary span{color:#8fd3ff}
+.fx.mov summary span{color:#c7b3ff;font-size:11px}
 .preview canvas{touch-action:none;width:100%;height:100%;display:block;object-fit:contain}
 .preview-controls{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
 .progress{height:4px;background:#26313e;border-radius:10px;overflow:hidden;margin-top:9px}
@@ -262,7 +263,7 @@ a.smallbtn{color:inherit;text-decoration:none}
             <div class="seg" id="sizeSeg"><button data-v="0.8">Chico</button><button data-v="1">Mediano</button><button data-v="1.25">Grande</button></div>
           </div>
           <label class="check"><input type="checkbox" id="optTransition"> Transiciones suaves entre escenas</label>
-          <label class="check"><input type="checkbox" id="optMotion"> Movimiento lento en las fotos (zoom)</label>
+          <label class="check"><input type="checkbox" id="optMotion"> Movimiento automático en las fotos (cada escena puede tener el suyo en 🎥)</label>
           <div class="set-row"><span class="set-title">Voz para leer el texto</span>
             <select id="ttsVoice"></select>
             <span class="set-title" style="margin-top:4px">Voz en inglés <span class="micro" style="font-weight:400">(los demás idiomas usan su voz automáticamente)</span></span>
@@ -318,7 +319,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 29 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 30 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -405,7 +406,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,motion:d.motion&&Array.isArray(d.motion.keys)?{keys:[...d.motion.keys],amt:+d.motion.amt||1}:null,movOpen:false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -430,9 +431,9 @@ async function setAudio(s,blob,name){
 }
 function removeAudio(s){revoke(s.audioUrl);s.audioBlob=null;s.audioUrl='';s.audioName='';s.audioDur=0;draw()}
 function move(i,d){const n=i+d;if(n<0||n>=scenes.length)return;[scenes[i],scenes[n]]=[scenes[n],scenes[i]];draw()}
-function duplicate(i){const s=scenes[i],c=makeScene({layers:s.layers.map(l=>({...l})),kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,layers:s.layers.map(l=>({...l})),music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
+function duplicate(i){const s=scenes[i],c=makeScene({layers:s.layers.map(l=>({...l})),kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,layers:s.layers.map(l=>({...l})),motion:s.motion?{keys:[...s.motion.keys],amt:s.motion.amt}:null,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
 function miniHead(s){const th=s.kind==='image'?`<img src="${s.mediaUrl}" alt="">`:s.kind==='video'?`<video src="${s.mediaUrl}#t=${((s.clipStart||0)+0.1).toFixed(2)}" muted playsinline preload="metadata"></video>`:'＋';
-  const ic=[fmtS(s.duration)];if(s.audioBlob)ic.push(s.audioName==='Voz del texto'?'🔊 voz':'🎙 voz');if(s.lang==='en')ic.push('🇺🇸');if(s.music&&s.music!=='')ic.push(s.music==='none'?'🔇':'🎵');if(s.layers&&s.layers.length)ic.push('🧩'+s.layers.length);
+  const ic=[fmtS(s.duration)];if(s.audioBlob)ic.push(s.audioName==='Voz del texto'?'🔊 voz':'🎙 voz');if(s.lang==='en')ic.push('🇺🇸');if(s.music&&s.music!=='')ic.push(s.music==='none'?'🔇':'🎵');if(s.motion)ic.push('🎥');if(s.layers&&s.layers.length)ic.push('🧩'+s.layers.length);
   return`<div class="mini"><span class="mth">${th}</span><span class="mtx"><span class="snip">${esc((s.text||'').trim()||(s.kind?'(sin texto)':'Escena vacía: toca para agregar foto o video'))}</span><span class="mic">${ic.join(' · ')}</span></span><span class="open">Editar ▾</span></div>`}
 function select(id){if(selectedId===id)return;selectedId=id;let cur=null;root.querySelectorAll('.scene').forEach(e=>{const on=+e.dataset.id===id;if(!on&&!e.classList.contains('collapsed')){const sc=scenes.find(x=>x.id===+e.dataset.id),mi=e.querySelector('.mini');if(sc&&mi)mi.outerHTML=miniHead(sc)}e.classList.toggle('sel',on);e.classList.toggle('collapsed',!on);if(on)cur=e});renderIdleSoon();
   if(cur)setTimeout(()=>{const r=cur.getBoundingClientRect();if(r.top<0||r.top>innerHeight*0.6)cur.scrollIntoView({behavior:'smooth',block:'start'})},80)}
@@ -478,6 +479,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn up" title="Subir e
   <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
   
   ${s.audioUrl?fxPanel(s):''}
+  ${s.kind?movPanel(s):''}
   ${s.kind?layPanel(s):''}
   ${musPanel(s)}
   ${s.kind==='video'?`<label class="check"><input type="checkbox" class="vaud" ${s.videoAudio?'checked':''}> Usar el sonido original del video</label>`:''}
@@ -508,7 +510,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn up" title="Subir e
     q('.rec').onclick=()=>s.recording?stopRecording(s):startRecording(s);
     const af=q('.audioFile');af.onchange=()=>{const f=af.files[0];if(f)setAudio(s,f,f.name)};
     if(s.audioUrl)wireFx(s,el);
-    if(s.kind)wireLay(s,el);
+    if(s.kind){wireMov(s,el);wireLay(s,el)}
     wireMus(s,el);
     q('.tts').onclick=()=>textToVoice(s);
     if(q('.nahBtn'))q('.nahBtn').onclick=()=>{s.voiceLang=s.voiceLang==='nah'?'':'nah';draw();if(s.voiceLang==='nah')setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t)t.focus()},50)};
@@ -1009,19 +1011,69 @@ function wireLay(s,el){
     drawScene(ctx,p.W,p.H,drag.s,idle.el,0,{still:true});const box=root.querySelector(`[data-lay="${drag.l.id}"]`);if(box){box.querySelector('.l-x').value=drag.l.x;box.querySelector('.l-y').value=drag.l.y}});
   const end=()=>{drag=null};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
 })();
+/* ---------- movimiento de la imagen por escena ---------- */
+const MOTIONS=[['in','🔍 Acercar'],['out','🔭 Alejar'],['grow','🌱 Crecer desde chiquita'],['right','➡️ Hacia la derecha'],['left','⬅️ Hacia la izquierda'],['up','⬆️ Hacia arriba'],['down','⬇️ Hacia abajo'],['rot','🔄 Girar']];
+const AMTS=[[0.6,'Suave'],[1,'Normal'],[1.7,'Fuerte']];
+const smooth=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)};
+function motionAt(s,p,index){
+  const r={zoom:1,px:0,py:0,rot:0,grow:1};
+  if(p==null)return r;
+  if(!s.motion){if(settings.motion&&s.kind==='image'){const dir=index%2;r.zoom=dir?1.14-0.14*p:1+0.14*p;r.px=((index%3)-1)*0.5*(p-0.5)}return r}
+  const k=s.motion.keys||[],a=s.motion.amt||1,e=smooth(p),has=x=>k.includes(x);
+  if(has('none'))return r;
+  const z=0.2*a;
+  if(has('in')&&has('out'))r.zoom=1+z*Math.sin(Math.PI*p);else if(has('in'))r.zoom=1+z*e;else if(has('out'))r.zoom=1+z*(1-e);
+  const panX=has('right')||has('left'),panY=has('up')||has('down');
+  if(panX||panY||has('rot'))r.zoom=Math.max(r.zoom,1)+0.1*a+(has('rot')?0.06*a:0);
+  const go=(f,b)=>f&&b?-1+2*Math.sin(Math.PI*p):f?-1+2*e:b?1-2*e:0;
+  const span=Math.min(1,0.6*a);r.px=go(has('right'),has('left'))*span;r.py=go(has('down'),has('up'))*span;
+  if(has('rot'))r.rot=(e-0.5)*0.1*a;
+  if(has('grow'))r.grow=0.35+0.65*smooth(p/0.75);
+  return r;
+}
+function motionLabel(s){if(!s.motion)return'✨ Automático';const k=s.motion.keys||[];if(k.includes('none'))return'⏸ Quieta';return k.map(x=>(MOTIONS.find(m=>m[0]===x)||['',''])[1].split(' ')[0]).join(' ')+' · '+(AMTS.find(a=>a[0]===(s.motion.amt||1))||AMTS[1])[1]}
+function movPanel(s){const k=s.motion?s.motion.keys||[]:null,amt=s.motion?s.motion.amt||1:1;
+  return`<details class="fx mov" ${s.movOpen?'open':''}><summary>🎥 Movimiento de la imagen <span class="mov-sum">${esc(motionLabel(s))}</span></summary><div class="fx-body">
+<div class="chips"><button class="chip ${!k?'act':''}" data-mv="auto">✨ Automático</button><button class="chip ${k&&k.includes('none')?'act':''}" data-mv="none">⏸ Quieta</button>${MOTIONS.map(([key,n])=>`<button class="chip ${k&&k.includes(key)?'act':''}" data-mv="${key}">${n}</button>`).join('')}</div>
+<div class="sl-top">Fuerza del movimiento</div><div class="seg mv-amt">${AMTS.map(([v,n])=>`<button class="${(k&&amt===v)?'act':''}" data-amt="${v}">${n}</button>`).join('')}</div>
+<div class="fx-actions"><button class="smallbtn mv-test">▶ Probar</button><button class="smallbtn mv-rand">🎲 Al azar</button></div>
+<span class="micro">Puedes elegir varias a la vez y se combinan. Si eliges dos opuestas (por ejemplo Acercar y Alejar) hace ida y vuelta.</span>
+</div></details>`}
+let mvTest=null;
+function testMotion(s){
+  if(engine)return;if(mvTest){cancelAnimationFrame(mvTest.raf);mvTest=null}
+  select(s.id);const [W,H]=setCanvasSize(),t0=performance.now(),dur=s.duration;
+  const step=async()=>{if(!mvTest)return;const t=(performance.now()-t0)/1000;if(t>=dur||engine){mvTest=null;renderIdle();return}
+    const m=idle.url===s.mediaUrl?idle.el:null;drawScene(ctx,W,H,s,m,t,{index:scenes.indexOf(s)});mvTest.raf=requestAnimationFrame(step)};
+  renderIdle().then(()=>{mvTest={raf:requestAnimationFrame(step)}});
+}
+function wireMov(s,el){
+  const q=c=>el.querySelector(c);
+  q('.mov').addEventListener('toggle',e=>{s.movOpen=e.target.open;if(e.target.open)select(s.id)});
+  const sync=()=>{const k=s.motion?s.motion.keys||[]:null;el.querySelectorAll('[data-mv]').forEach(b=>{const v=b.dataset.mv;b.classList.toggle('act',v==='auto'?!k:!!(k&&k.includes(v)))});
+    el.querySelectorAll('[data-amt]').forEach(b=>b.classList.toggle('act',!!s.motion&&+b.dataset.amt===(s.motion.amt||1)));q('.mov-sum').textContent=motionLabel(s)};
+  el.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const v=b.dataset.mv,amt=s.motion?s.motion.amt||1:1;
+    if(v==='auto')s.motion=null;else if(v==='none')s.motion={keys:['none'],amt};
+    else{let k=(s.motion&&s.motion.keys||[]).filter(x=>x!=='none');k=k.includes(v)?k.filter(x=>x!==v):[...k,v];s.motion=k.length?{keys:k,amt}:null}
+    sync();testMotion(s)});
+  el.querySelectorAll('[data-amt]').forEach(b=>b.onclick=()=>{if(!s.motion||(s.motion.keys||[]).includes('none'))s.motion={keys:['in'],amt:+b.dataset.amt};else s.motion.amt=+b.dataset.amt;sync();testMotion(s)});
+  q('.mv-test').onclick=()=>testMotion(s);
+  q('.mv-rand').onclick=()=>{const pick=a=>a[Math.floor(Math.random()*a.length)];const k=[pick(['in','out','grow','in','out'])];if(Math.random()<0.75)k.push(pick(['right','left','up','down']));if(Math.random()<0.2)k.push('rot');s.motion={keys:k,amt:pick([0.6,1,1,1.7])};sync();testMotion(s)};
+}
 function drawScene(c,W,H,s,m,t,o={}){
   const dur=s.duration,p=dur?Math.min(1,Math.max(0,t/dur)):0;
   c.save();c.fillStyle='#000';c.fillRect(0,0,W,H);
   if(m){
     const sw=m.videoWidth||m.naturalWidth||m.width,sh=m.videoHeight||m.naturalHeight||m.height;
     if(sw&&sh){
-      let zoom=1,px=0;
-      if(settings.motion&&s.kind==='image'&&!o.still){const dir=(o.index||0)%2;zoom=dir?1.14-0.14*p:1+0.14*p;px=(((o.index||0)%3)-1)*0.5*(p-0.5)}
-      if(s.fit==='contain'){
-        bgCanvas.width=36;bgCanvas.height=Math.max(8,Math.round(36*H/W));cover(bgCtx,m,sw,sh,bgCanvas.width,bgCanvas.height,1.1);
-        c.imageSmoothingEnabled=true;c.drawImage(bgCanvas,0,0,W,H);c.fillStyle='rgba(0,0,0,.45)';c.fillRect(0,0,W,H);
-        contain(c,m,sw,sh,W,H,s.kind==='image'?zoom:1);
-      }else cover(c,m,sw,sh,W,H,zoom,px,0);
+      const mv=motionAt(s,o.still?null:p,o.index||0);let zoom=mv.zoom,px=mv.px,py=mv.py;
+      const blurBg=()=>{bgCanvas.width=36;bgCanvas.height=Math.max(8,Math.round(36*H/W));cover(bgCtx,m,sw,sh,bgCanvas.width,bgCanvas.height,1.1);
+        c.imageSmoothingEnabled=true;c.drawImage(bgCanvas,0,0,W,H);c.fillStyle='rgba(0,0,0,.45)';c.fillRect(0,0,W,H)};
+      if(s.fit==='contain'||mv.grow<1)blurBg();
+      c.save();if(mv.rot){c.translate(W/2,H/2);c.rotate(mv.rot);c.translate(-W/2,-H/2)}
+      if(s.fit==='contain')contain(c,m,sw,sh,W,H,zoom*mv.grow);
+      else cover(c,m,sw,sh,W,H,zoom*mv.grow,px,py);
+      c.restore();
     }
   }
   drawLayers(c,W,H,s,o.still?null:t);
@@ -1179,7 +1231,7 @@ function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blo
 function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
 async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
 function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,ttsVoiceEn:settings.ttsVoiceEn,music:bid(settings.musicBlob)},
-  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,motion:s.motion,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
 let saving=false;
 async function autosave(){
   if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
@@ -1327,7 +1379,7 @@ async function loadBackup(data){
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;fillVoices();
     settings.musicBlob=st.music?dataToBlob(st.music):null;settings.musicName=st.music?st.musicName||'Música':'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
     for(const x of data.scenes){
-      const d={layers:(x.layers||[]).filter(l=>l&&l.file&&String(l.file).startsWith('data:')).map(l=>({...l,blob:dataToBlob(l.file)})),voiceId:x.voiceId,voiceLang:x.voiceLang,voiceText:x.voiceText,music:x.music,musicVol:x.musicVol,musicName:x.musicName,musicBlob:x.musicFile&&x.musicFile.startsWith('data:')?dataToBlob(x.musicFile):null,clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textEs:x.textEs,textFor:x.textFor,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
+      const d={motion:x.motion,layers:(x.layers||[]).filter(l=>l&&l.file&&String(l.file).startsWith('data:')).map(l=>({...l,blob:dataToBlob(l.file)})),voiceId:x.voiceId,voiceLang:x.voiceLang,voiceText:x.voiceText,music:x.music,musicVol:x.musicVol,musicName:x.musicName,musicBlob:x.musicFile&&x.musicFile.startsWith('data:')?dataToBlob(x.musicFile):null,clipStart:x.clipStart,clip:x.clip,text:x.text,lang:x.lang,textEs:x.textEs,textFor:x.textFor,textAlt:x.textAlt,textAltFor:x.textAltFor,textPos:x.textPos,fit:x.fit,duration:x.duration,videoAudio:x.videoAudio,speedFit:x.speedFit,fx:x.fx,mediaName:x.mediaName||x.imageName,mediaDur:x.mediaDur,audioName:x.audioName,audioDur:x.audioDur};
       const media=x.media||x.image;
       if(media){d.mediaBlob=dataToBlob(media);d.kind=x.kind||(d.mediaBlob.type.startsWith('video/')?'video':'image')}
       if(x.audio)d.audioBlob=dataToBlob(x.audio);else{d.audioName='';d.audioDur=0}
