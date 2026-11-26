@@ -226,7 +226,8 @@ a.smallbtn{color:inherit;text-decoration:none}
             <select id="ttsVoice"></select>
             <span class="set-title" style="margin-top:4px">Voz en inglés <span class="micro" style="font-weight:400">(los demás idiomas usan su voz automáticamente)</span></span>
             <select id="ttsVoiceEn"></select>
-            <button class="smallbtn" id="allLangBtn">🌐 Traducir todo el video a…</button>
+            <button class="smallbtn" id="allLangBtn">🇺🇸 Pasar todo a inglés</button>
+            <button class="smallbtn" id="allEsBtn">🇲🇽 Regresar todo a español</button>
             <button class="smallbtn" id="ttsAll">🔊 Convertir todos los textos a voz</button>
             <button class="smallbtn" id="ttsDiag">🩺 Probar la voz (si no funciona)</button>
             <span class="micro">La primera vez descarga la voz (necesita internet). Después funciona sin internet.</span>
@@ -276,7 +277,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 21 · 25 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 22 · 25 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -363,7 +364,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,voiceLang:d.voiceLang==='nah'?'nah':'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:LANGS.some(l=>l.c===d.lang&&l.c!=='nah')?d.lang:'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -427,10 +428,10 @@ function draw(){
  <div class="fields">
   <div><div class="labelrow">TEXTO EN PANTALLA <span>Escena ${i+1}</span></div>
    <textarea placeholder="Escribe aquí lo que quieres contar en esta escena...">${esc(s.text)}</textarea>
-   <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<button class="smallbtn lang" title="Traducir el texto">🌐 ${s.lang==='es'?'Traducir a…':langOf(s.lang).f+' '+langOf(s.lang).n}</button>${SR?`<button class="smallbtn talkEn" title="Hablas en español y queda en inglés">🗣→🇺🇸</button>`:''}<select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
+   <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<button class="smallbtn lang" title="Traducir el texto">${s.lang==='en'?'🇲🇽 Regresar a español':'🇺🇸 Pasar a inglés'}</button><select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
   </div>
-  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><button class="smallbtn nahBtn ${s.voiceLang==='nah'?'nahon':''}" title="El texto queda en español y la voz habla náhuatl">🪶 Voz en náhuatl</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
-  ${s.voiceLang==='nah'?nahBox(s):''}
+  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
+  
   ${s.audioUrl?fxPanel(s):''}
   ${musPanel(s)}
   ${s.kind==='video'?`<label class="check"><input type="checkbox" class="vaud" ${s.videoAudio?'checked':''}> Usar el sonido original del video</label>`:''}
@@ -463,9 +464,9 @@ function draw(){
     if(s.audioUrl)wireFx(s,el);
     wireMus(s,el);
     q('.tts').onclick=()=>textToVoice(s);
-    q('.nahBtn').onclick=()=>{s.voiceLang=s.voiceLang==='nah'?'':'nah';draw();if(s.voiceLang==='nah')setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t)t.focus()},50)};
+    if(q('.nahBtn'))q('.nahBtn').onclick=()=>{s.voiceLang=s.voiceLang==='nah'?'':'nah';draw();if(s.voiceLang==='nah')setTimeout(()=>{const t=root.querySelector(`[data-id="${s.id}"] .nahText`);if(t)t.focus()},50)};
     if(q('.nahText')){q('.nahText').oninput=e=>{s.voiceText=e.target.value;s.nahWaiting=false};q('.nahGo').onclick=()=>textToVoice(s);q('.nahOff').onclick=()=>{s.voiceLang='';s.nahWaiting=false;draw()};q('.nahTr').onclick=()=>nahOpenGoogle(s);q('.nahPaste').onclick=()=>nahPaste(s)}
-    q('.lang').onclick=()=>openLangBoard(s);
+    q('.lang').onclick=()=>setSceneLang(s,s.lang==='en'?'es':'en');
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
     if(q('.dictate'))q('.dictate').onclick=()=>toggleDictation(s);
@@ -632,7 +633,7 @@ async function textToVoice(s,auto){
     await setAudio(s,wav,aname);
     const el=root.querySelector(`[data-id="${s.id}"]`);if(el&&!auto)playVoice(s,el);
     return true;
-  }catch(e){console.error(e);set('🔊 Texto a voz');toast(e&&e.message==='novoice'?`Todavía no hay voz automática en ${langOf(s.lang).n.toLowerCase()}. El texto sí quedó traducido; puedes grabar tu voz.`:!navigator.onLine?'Necesitas internet la primera vez para descargar la voz.':`No se pudo crear la voz. Detalle: ${String(e&&e.message||e).slice(0,140)} — Usa “🩺 Probar la voz” en Ajustes.`,9000);return false}
+  }catch(e){console.error(e);set('🔊 Texto a voz');window.__ttsErr=String(e&&e.message||e);if(e&&e.message!=='novoice'&&navigator.onLine&&!window.__diagShown){window.__diagShown=true;setTimeout(()=>$('#ttsDiag').click(),600)}toast(e&&e.message==='novoice'?`Todavía no hay voz automática en ${langOf(s.lang).n.toLowerCase()}. El texto sí quedó traducido; puedes grabar tu voz.`:!navigator.onLine?'Necesitas internet la primera vez para descargar la voz.':`No se pudo crear la voz. Detalle: ${String(e&&e.message||e).slice(0,140)} — Usa “🩺 Probar la voz” en Ajustes.`,9000);return false}
   finally{ttsBusy=false}
 }
 $('#ttsVoiceEn').onchange=e=>{settings.ttsVoiceEn=e.target.value;try{localStorage.setItem('ttsVoiceEn',settings.ttsVoiceEn)}catch{}};
@@ -722,7 +723,7 @@ function talkToEnglish(s){
 }
 async function allLang(to){
   if(engine||ttsBusy)return;const list=scenes.filter(x=>x.text.trim()&&x.lang!==to);if(!list.length)return toast(`Todo ya está en ${langOf(to).n.toLowerCase()}.`);
-  const b=$('#allLangBtn'),lbl=b.textContent;b.disabled=true;let ok=0;
+  const b=$(to==='en'?'#allLangBtn':'#allEsBtn'),lbl=b.textContent;b.disabled=true;let ok=0;
   for(let i=0;i<list.length;i++){b.textContent=`⏳ Escena ${i+1} de ${list.length}…`;if(await setSceneLang(list[i],to,true))ok++;else break}
   b.disabled=false;b.textContent=lbl;if(ok)toast(`Listo: ${ok} escena${ok>1?'s':''} en ${langOf(to).n.toLowerCase()}.`);
 }
@@ -737,6 +738,7 @@ $('#ttsDiag').onclick=async()=>{
   $('#pbClose').addEventListener('click',()=>alive=false,{once:true});
   const ver=($('#projectCard .micro:not(#storageInfo)')||{}).textContent||'';
   log(null,`App: ${ver.trim()} · ${/iPhone|iPad/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':'Otro'} · ${(navigator.userAgent.match(/(CriOS|Chrome|Version|Firefox|SamsungBrowser)\/[\d.]+/)||[''])[0]}${/Safari/.test(navigator.userAgent)&&!/Chrome|CriOS/.test(navigator.userAgent)?' Safari':''}`);
+  if(window.__ttsErr)log(false,'Error al crear la voz: '+window.__ttsErr);
   log(navigator.onLine,`Internet: ${navigator.onLine?'sí':'NO'}`);
   log(null,`Aislamiento (hilos): ${self.crossOriginIsolated?'sí':'no (normal)'} · núcleos: ${navigator.hardwareConcurrency||'?'}`);
   let opfs=false;try{const d=await navigator.storage.getDirectory();await d.getDirectoryHandle('piper',{create:true});opfs=true}catch(e){log(false,'Almacenamiento privado (OPFS): '+e.message)}
@@ -767,7 +769,7 @@ $('#ttsDiag').onclick=async()=>{
     const u=URL.createObjectURL(wav),b=$('#dgPlay');if(b){b.classList.remove('hidden');b.onclick=()=>{const a=new Audio(u);a.play().catch(()=>toast('Toca de nuevo para escuchar.'))}}
   }catch(e){lines.pop();log(false,'Crear la voz: '+(e&&e.message||e)+(e&&e.stack?'\n   '+String(e.stack).split('\n').slice(0,2).join('\n   '):''))}
 };
-$('#allLangBtn').onclick=()=>openLangBoard(null);
+$('#allLangBtn').onclick=()=>allLang('en');$('#allEsBtn').onclick=()=>allLang('es');
 $('#ttsVoice').onchange=e=>{settings.ttsVoice=e.target.value;try{localStorage.setItem('ttsVoice',settings.ttsVoice)}catch{}};
 $('#ttsAll').onclick=async()=>{
   if(ttsBusy||engine)return;const list=scenes.filter(s=>(s.voiceLang==='nah'?s.voiceText:s.text).trim()&&!s.audioBlob);
@@ -1090,7 +1092,8 @@ async function applyMeta(meta){
     if('transition'in st)settings.transition=!!st.transition;if('motion'in st)settings.motion=!!st.motion;if('musicVol'in st)settings.musicVol=+st.musicVol;
     if(st.ttsVoice)settings.ttsVoice=st.ttsVoice;if(st.ttsVoiceEn)settings.ttsVoiceEn=st.ttsVoiceEn;settings.musicBlob=await getB(st.music);settings.musicName=st.musicName||'';settings.musicPreset=st.musicPreset||(settings.musicBlob?'file':'');
     if(settings.musicPreset==='file'&&!settings.musicBlob)settings.musicPreset='';
-    for(const x of meta.scenes){const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio),musicBlob:await getB(x.musicFile)};if(d.music==='file'&&!d.musicBlob)d.music='';if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
+    for(let x of meta.scenes){if(x.lang&&x.lang!=='es'&&x.lang!=='en'){x={...x,text:x.textEs||x.text,lang:'es'}}
+      const d={...x,mediaBlob:await getB(x.media),audioBlob:await getB(x.audio),musicBlob:await getB(x.musicFile)};if(d.music==='file'&&!d.musicBlob)d.music='';if(!d.mediaBlob)d.kind='';if(!d.audioBlob){d.audioName='';d.audioDur=0}scenes.push(makeScene(d))}
     if(!scenes.length)scenes.push(makeScene());
     selectedId=scenes[0]?.id||null;fillVoices();
 }
