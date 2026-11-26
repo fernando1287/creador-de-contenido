@@ -276,7 +276,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 19 · 24 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 20 · 25 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -335,7 +335,7 @@ const AC=window.AudioContext||window.webkitAudioContext;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const FORMATS={'9:16':[720,1280],'1:1':[720,720],'16:9':[1280,720]};
 const MIMES=['video/mp4;codecs=avc1.42E01F,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicPreset:'',musicVol:0.25,ttsVoice:(()=>{try{return localStorage.getItem('ttsVoice')||'es_MX-claude-high'}catch{return'es_MX-claude-high'}})(),ttsVoiceEn:(()=>{try{return localStorage.getItem('ttsVoiceEn')||'en_US-hfc_female-medium'}catch{return'en_US-hfc_female-medium'}})()};
+const settings={format:'9:16',textSize:1,transition:true,motion:true,musicBlob:null,musicName:'',musicPreset:'',musicVol:0.25,ttsVoice:(()=>{try{return localStorage.getItem('ttsVoice')||'es_MX-ald-medium'}catch{return'es_MX-ald-medium'}})(),ttsVoiceEn:(()=>{try{return localStorage.getItem('ttsVoiceEn')||'en_US-hfc_female-medium'}catch{return'en_US-hfc_female-medium'}})()};
 let scenes=[],idc=0,selectedId=null,engine=null,decodeCtx=null,idle={url:'',el:null},idleTimer=null,lastExport=null;
 
 /* ---------- utilidades ---------- */
@@ -351,6 +351,9 @@ function revoke(u){if(u)try{URL.revokeObjectURL(u)}catch{}}
 function blobToData(b){return new Promise((res,rej)=>{const r=new FileReader;r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)})}
 function dataToBlob(u){const i=u.indexOf(','),head=u.slice(0,i),mime=(head.match(/:(.*?)(;|$)/)||[])[1]||'application/octet-stream',bin=atob(u.slice(i+1)),arr=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)arr[k]=bin.charCodeAt(k);return new Blob([arr],{type:mime})}
 function getDecodeCtx(){if(!decodeCtx&&AC)decodeCtx=new AC();return decodeCtx}
+// iPhone: el sonido se debe "desbloquear" con un toque; si no, la voz se crea pero no se oye
+(()=>{const unlock=()=>{try{const ac=getDecodeCtx();if(!ac)return;const b=ac.createBuffer(1,1,22050),src=ac.createBufferSource();src.buffer=b;src.connect(ac.destination);src.start(0);if(ac.state!=='running')ac.resume().catch(()=>{});if(ac.state==='running'){document.removeEventListener('touchend',unlock,true);document.removeEventListener('pointerup',unlock,true);document.removeEventListener('click',unlock,true)}}catch{}};
+  document.addEventListener('touchend',unlock,true);document.addEventListener('pointerup',unlock,true);document.addEventListener('click',unlock,true)})();
 function decodeBuf(ac,blob){return blob.arrayBuffer().then(ab=>new Promise((res,rej)=>{const p=ac.decodeAudioData(ab,res,rej);if(p&&p.catch)p.catch(rej)}))}
 async function audioDuration(blob){try{return (await decodeBuf(getDecodeCtx(),blob)).duration}catch{return 0}}
 function isVideoFile(f){return (f.type||'').startsWith('video/')||/\.(mp4|mov|webm|m4v|3gp|mkv)$/i.test(f.name||'')}
@@ -495,7 +498,7 @@ function toggleDictation(s){
 }
 
 /* ---------- texto a voz (Piper, corre en el teléfono) ---------- */
-const VOICE_NAMES={'es_MX-claude-high':'México · Claude (alta calidad)','es_MX-ald-medium':'México · Ald','es_ES-davefx-medium':'España · Davefx','es_ES-sharvard-medium':'España · Sharvard','es_ES-carlfm-x_low':'España · Carlfm (ligera)','es_ES-mls_10246-low':'España · MLS 10246 (ligera)','es_ES-mls_9972-low':'España · MLS 9972 (ligera)','es_AR-daniela-high':'Argentina · Daniela (alta calidad)','en_US-hfc_female-medium':'EE.UU. · HFC (mujer)','en_US-hfc_male-medium':'EE.UU. · HFC (hombre)','en_US-ryan-high':'EE.UU. · Ryan (alta calidad)','en_US-lessac-medium':'EE.UU. · Lessac','en_US-amy-medium':'EE.UU. · Amy','en_GB-alan-medium':'Inglaterra · Alan','en_GB-jenny_dioco-medium':'Inglaterra · Jenny'};
+const VOICE_NAMES={'es_MX-ald-medium':'México · Ald (recomendada)','es_MX-claude-high':'México · Claude (alta calidad, pesada y lenta)','es_ES-davefx-medium':'España · Davefx','es_ES-sharvard-medium':'España · Sharvard','es_ES-carlfm-x_low':'España · Carlfm (ligera)','es_ES-mls_10246-low':'España · MLS 10246 (ligera)','es_ES-mls_9972-low':'España · MLS 9972 (ligera)','es_AR-daniela-high':'Argentina · Daniela (alta calidad)','en_US-hfc_female-medium':'EE.UU. · HFC (mujer)','en_US-hfc_male-medium':'EE.UU. · HFC (hombre)','en_US-ryan-high':'EE.UU. · Ryan (alta calidad)','en_US-lessac-medium':'EE.UU. · Lessac','en_US-amy-medium':'EE.UU. · Amy','en_GB-alan-medium':'Inglaterra · Alan','en_GB-jenny_dioco-medium':'Inglaterra · Jenny'};
 let allVoiceKeys=[];
 let voiceIds=Object.keys(VOICE_NAMES).filter(k=>k.startsWith('es_')),voiceIdsEn=Object.keys(VOICE_NAMES).filter(k=>k.startsWith('en_')),ttsPromise=null,ttsBusy=false;
 // jsdelivr (+esm) primero: la versión de esm.sh carga pero falla al crear la voz
@@ -518,22 +521,43 @@ let ttsIdx=0,ttsLastErr='';
 function fillVoices(){const f=(sel,ids,cur)=>{if(!ids.includes(cur))ids.unshift(cur);sel.innerHTML=ids.map(v=>`<option value="${esc(v)}">${esc(VOICE_NAMES[v]||v)}</option>`).join('');sel.value=cur};f($('#ttsVoice'),voiceIds,settings.ttsVoice);f($('#ttsVoiceEn'),voiceIdsEn,settings.ttsVoiceEn)}
 function loadTTS(){
   if(!ttsPromise)ttsPromise=(async()=>{let err;for(let i=ttsIdx;i<TTS_URLS.length;i++){const u=TTS_URLS[i];try{const m=await import(u);ttsIdx=i;
-      try{const all=await m.voices();allVoiceKeys=Object.keys(all||{});const ks=allVoiceKeys,es=ks.filter(k=>/^es_/.test(k)),en=ks.filter(k=>/^en_/.test(k));if(es.length)voiceIds=es.sort((a,b)=>(b.startsWith('es_MX')-a.startsWith('es_MX'))||a.localeCompare(b));if(en.length)voiceIdsEn=en.sort((a,b)=>(b.startsWith('en_US')-a.startsWith('en_US'))||a.localeCompare(b));fillVoices()}catch{}
+      try{let ks0=m.PATH_MAP?Object.keys(m.PATH_MAP):[];if(!ks0.length){const all=await m.voices();ks0=Array.isArray(all)?all.map(v=>v&&v.key).filter(Boolean):Object.keys(all||{})}allVoiceKeys=ks0;const ks=allVoiceKeys,es=ks.filter(k=>/^es_/.test(k)),en=ks.filter(k=>/^en_/.test(k));if(es.length)voiceIds=es.sort((a,b)=>(b.startsWith('es_MX')-a.startsWith('es_MX'))||a.localeCompare(b));if(en.length)voiceIdsEn=en.sort((a,b)=>(b.startsWith('en_US')-a.startsWith('en_US'))||a.localeCompare(b));fillVoices()}catch{}
       return m}catch(e){err=e}}throw err})().catch(e=>{ttsPromise=null;throw e});
   return ttsPromise;
 }
+function ttsChunks(t,max=160){
+  t=t.replace(/\s+/g,' ').trim();if(t.length<=max)return t?[t]:[];
+  const out=[];let rest=t;
+  while(rest.length>max){let cut=-1;for(const re of [/[.!?…;:](?=\s)/g,/,(?=\s)/g,/\s/g]){let m,last=-1;re.lastIndex=0;while((m=re.exec(rest))&&m.index<max)last=m.index+1;if(last>max*0.4){cut=last;break}}
+    if(cut<0)cut=max;out.push(rest.slice(0,cut).trim());rest=rest.slice(cut).trim()}
+  if(rest)out.push(rest);return out.filter(Boolean);
+}
+function encodeWav(buf){const ch=buf.getChannelData(0),sr=buf.sampleRate,n=ch.length,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,x)=>{for(let i=0;i<x.length;i++)v.setUint8(o+i,x.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,ch[i]));v.setInt16(44+i*2,x<0?x*0x8000:x*0x7fff,true)}return new Blob([b],{type:'audio/wav'})}
+function predictWatch(tts,cfg,onP,idleMs){
+  return new Promise((res,rej)=>{let t;const arm=()=>{clearTimeout(t);t=setTimeout(()=>rej(new Error('la voz tardó demasiado (se quedó detenida)')),idleMs)};arm();
+    Promise.resolve(tts.predict(cfg,p=>{arm();onP&&onP(p)})).then(b=>{clearTimeout(t);res(b)},e=>{clearTimeout(t);rej(e)})});
+}
 async function synth(text,onState,lang){
   const tts=await loadTTS(),id=voiceFor(lang);if(!id)throw new Error('novoice');
+  if(allVoiceKeys.length&&!allVoiceKeys.includes(id))throw new Error(`la voz “${id}” no existe en el motor`);
+  const parts=ttsChunks(text);if(!parts.length)throw new Error('no hay texto');
   try{
-    let stored=[];try{stored=await tts.stored()}catch{}
-    if(!stored.includes(id)){onState('⏳ Descargando voz…');await tts.download(id,p=>{if(p&&p.total)onState(`⏳ Descargando voz ${Math.round(p.loaded*100/p.total)}%`)})}
-    onState('⏳ Creando voz…');
-    const wav=await tts.predict({text,voiceId:id});
-    if(!wav||!wav.size)throw new Error('la voz salió vacía');
-    return wav;
+    const ac=getDecodeCtx(),bufs=[];
+    for(let i=0;i<parts.length;i++){
+      onState(parts.length>1?`⏳ Creando voz ${i+1} de ${parts.length}…`:'⏳ Creando voz…');
+      const wav=await predictWatch(tts,{text:parts[i],voiceId:id},p=>{if(p&&p.total&&p.loaded<p.total&&/\.onnx$/.test(p.url||''))onState(`⏳ Descargando voz ${Math.round(p.loaded*100/p.total)}% (solo la primera vez)`)},i===0?240000:120000);
+      if(!wav||!wav.size)throw new Error('la voz salió vacía');
+      if(parts.length===1)return wav;
+      bufs.push(await decodeBuf(ac,wav));
+    }
+    const sr=bufs[0].sampleRate,gap=Math.round(sr*0.18),len=bufs.reduce((a,b)=>a+b.length+gap,0),out=ac.createBuffer(1,len,sr),d=out.getChannelData(0);
+    let o=0;bufs.forEach(b=>{d.set(b.getChannelData(0),o);o+=b.length+gap});
+    return encodeWav(out);
   }catch(e){
     console.error('TTS',TTS_URLS[ttsIdx],e);ttsLastErr=String(e&&e.message||e);
-    if(ttsIdx<TTS_URLS.length-1){ttsIdx++;ttsPromise=null;onState('⏳ Probando otra forma…');return synth(text,onState,lang)}
+    if(ttsIdx<TTS_URLS.length-1&&!/tardó demasiado|no existe/.test(ttsLastErr)){ttsIdx++;ttsPromise=null;onState('⏳ Probando otra forma…');return synth(text,onState,lang)}
     ttsIdx=0;ttsPromise=null;throw e;
   }
 }
@@ -705,7 +729,7 @@ $('#ttsDiag').onclick=async()=>{
   for(let i=0;i<TTS_URLS.length&&!tts;i++){const t0=performance.now();log(null,`Cargando motor de voz (${i?'esm.sh':'jsdelivr'})…`);
     try{tts=await withTimeout(import(TTS_URLS[i]),30000);upd('');lines.pop();log(true,`Motor de voz cargado desde ${i?'esm.sh':'jsdelivr'} (${Math.round(performance.now()-t0)} ms)`)}catch(e){lines.pop();log(false,`Motor desde ${i?'esm.sh':'jsdelivr'}: ${e.message}`)}}
   if(!tts||!alive)return;
-  let voices={};try{voices=await withTimeout(tts.voices(),30000);allVoiceKeys=Object.keys(voices||{});log(true,`Lista de voces: ${allVoiceKeys.length} voces`)}catch(e){log(false,'Lista de voces: '+e.message)}
+  try{allVoiceKeys=tts.PATH_MAP?Object.keys(tts.PATH_MAP):[];if(!allVoiceKeys.length){const v=await withTimeout(tts.voices(),30000);allVoiceKeys=Array.isArray(v)?v.map(x=>x&&x.key).filter(Boolean):Object.keys(v||{})}log(allVoiceKeys.length>0,`Lista de voces: ${allVoiceKeys.length} voces`)}catch(e){log(false,'Lista de voces: '+e.message)}
   const id=voiceFor('es');log(null,`Voz elegida: ${id}${allVoiceKeys.length&&!allVoiceKeys.includes(id)?' (⚠ no está en la lista)':''}`);
   let stored=[];try{stored=await tts.stored();log(true,`Voces ya descargadas: ${stored.length?stored.join(', '):'ninguna'}`)}catch(e){log(false,'Voces descargadas: '+e.message)}
   if(!alive)return;
@@ -1611,7 +1635,8 @@ ib.onclick=async()=>{if(installEvt){installEvt.prompt();await installEvt.userCho
 
 
 syncSettingsUI();
-(async()=>{const ok=await restore();syncSettingsUI();setTimeout(updateStorageInfo,1500);
+(async()=>{const ok=await restore();try{if(!localStorage.getItem('ttsVoiceMig1')){localStorage.setItem('ttsVoiceMig1','1');if(settings.ttsVoice==='es_MX-claude-high'){settings.ttsVoice='es_MX-ald-medium';try{localStorage.setItem('ttsVoice',settings.ttsVoice)}catch{}fillVoices()}}}catch{}
+  syncSettingsUI();setTimeout(updateStorageInfo,1500);
   if(onGithub){const has=ok&&scenes.some(x=>x.kind||x.text||x.audioBlob);
     if(!has){location.replace(PORTAL_URL+'creador/');return}
     $('#moveOpen').href=PORTAL_URL+'creador/?importar=1';$('#moveBox').classList.remove('hidden');}
