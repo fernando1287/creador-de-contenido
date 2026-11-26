@@ -282,7 +282,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 26 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 27 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -1370,11 +1370,33 @@ const TRACKS={
  misterio:{name:'👻 Misterio',chords:[[38,50,53,58],[38,50,53,57],[34,50,53,58],[37,49,52,56]]},
  suspenso:{name:'⏳ Suspenso',chords:[[40,52,55,59],[36,52,55,60],[33,52,57,60],[35,51,54,59]]},
  epica:{name:'⚔️ Épica',chords:[[38,50,57,62],[34,50,53,58],[36,48,55,60],[33,49,57,64]]},
- tranquila:{name:'🌅 Tranquila',chords:[[36,60,64,67],[33,57,60,64],[29,57,60,65],[31,55,59,62]]}};
+ tranquila:{name:'🌅 Tranquila',chords:[[36,60,64,67],[33,57,60,64],[29,57,60,65],[31,55,59,62]]},
+ // 20 pistas con adrenalina (batería, bajo y ritmo rápido)
+ adrenalina:{name:'⚡ Adrenalina',gen:1,bpm:174,root:50,mode:'minor',prog:[0,5,2,6],drums:'dnb',bass:'reese',lead:'arp16',pad:1},
+ persecucion:{name:'🏎 Persecución',gen:1,bpm:160,root:45,mode:'phryg',prog:[0,1,0,6],drums:'rock',bass:'16th',lead:'stab'},
+ accion:{name:'🔥 Acción total',gen:1,bpm:140,root:43,mode:'minor',prog:[0,5,3,6],drums:'trailer',bass:'8th',lead:'stab',pad:1},
+ pelea:{name:'🥊 Pelea',gen:1,bpm:128,root:40,mode:'phryg',prog:[0,0,1,0],drums:'four',bass:'8th',lead:'saw'},
+ despegue:{name:'🚀 Despegue',gen:1,bpm:150,root:47,mode:'major',prog:[5,3,0,4],drums:'four',bass:'off',lead:'arp16',pad:1,riser:1},
+ videojuego:{name:'🎮 Videojuego',gen:1,bpm:150,root:48,mode:'major',prog:[0,5,3,4],drums:'chip',bass:'8th',lead:'chip'},
+ carrera:{name:'🏁 Carrera',gen:1,bpm:170,root:52,mode:'minor',prog:[0,5,3,4],drums:'rock',bass:'8th',lead:'saw'},
+ explosion:{name:'💥 Explosión',gen:1,bpm:90,root:38,mode:'harm',prog:[0,5,3,4],drums:'trailer',bass:'none',lead:'stab',pad:1,hits:1},
+ mision:{name:'🕶 Misión secreta',gen:1,bpm:120,root:40,mode:'harm',prog:[0,0,5,4],drums:'spy',bass:'walk',lead:'pluck'},
+ nocturna:{name:'🌆 Ciudad nocturna',gen:1,bpm:118,root:45,mode:'minor',prog:[0,5,2,6],drums:'four',bass:'8th',lead:'arp8',pad:1},
+ cuenta:{name:'🧨 Cuenta regresiva',gen:1,bpm:130,root:42,mode:'minor',prog:[0,0,5,6],drums:'four',bass:'16th',lead:'tick',riser:1},
+ caceria:{name:'🏹 Cacería',gen:1,bpm:110,root:43,mode:'phryg',prog:[0,1,0,6],drums:'tribal',bass:'8th',lead:'pluck'},
+ batalla:{name:'⚔️ Batalla épica',gen:1,bpm:100,root:38,mode:'minor',prog:[0,5,2,6],drums:'taiko',bass:'8th',lead:'stab',pad:1},
+ rescate:{name:'🚁 Rescate',gen:1,bpm:135,root:47,mode:'minor',prog:[5,3,0,4],drums:'four',bass:'off',lead:'arp16',pad:1},
+ tormenta:{name:'🌪 Tormenta',gen:1,bpm:145,root:41,mode:'phryg',prog:[0,1,5,1],drums:'dnb',bass:'16th',lead:'saw',pad:1},
+ robot:{name:'🦾 Robot',gen:1,bpm:130,root:40,mode:'minor',prog:[0,0,0,3],drums:'techno',bass:'16th',lead:'arp16',wave:'square'},
+ victoria:{name:'🏆 Victoria',gen:1,bpm:128,root:48,mode:'major',prog:[0,4,5,3],drums:'four',bass:'off',lead:'arp8',pad:1},
+ volcan:{name:'🌋 Volcán',gen:1,bpm:140,root:38,mode:'minor',prog:[0,5,3,4],drums:'half',bass:'wobble',lead:'stab'},
+ velocidad:{name:'🐆 Velocidad',gen:1,bpm:126,root:45,mode:'minor',prog:[0,6,5,6],drums:'house',bass:'off',lead:'stab',pad:1},
+ desafio:{name:'🎯 Desafío',gen:1,bpm:145,root:42,mode:'minor',prog:[0,5,6,4],drums:'trap',bass:'808',lead:'pluck'}};
 const LOOP=32,trackCache=new Map();
 const mf=m=>440*Math.pow(2,(m-69)/12);
 function rng(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646}}
 async function renderTrack(key,sr){
+  if(TRACKS[key]&&TRACKS[key].gen)return renderGen(TRACKS[key],sr,key);
   const T=TRACKS[key],TAIL=5,OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,Math.floor(sr*(LOOP+TAIL)),sr);
   const master=oc.createGain();master.gain.value=0.9;const comp=oc.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;master.connect(comp).connect(oc.destination);
   const rev=oc.createConvolver(),rl=Math.floor(sr*3.5),ib=oc.createBuffer(2,rl,sr);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<rl;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/rl,2.5)}rev.buffer=ib;
@@ -1410,13 +1432,104 @@ async function renderTrack(key,sr){
        for(let k=0;k<cd*2;k++){const seq=[1,2,3,2];pluck(ch[seq[k%4]]+12,t+k*0.5,{type:'sine',vol:0.09,dec:1.8,out:wet})}break;
     }});
   const out=await new Promise((res,rej)=>{oc.oncomplete=e=>res(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(res,rej)});
+  return finishLoop(out,sr,LOOP);
+}
+function finishLoop(out,sr,loopSec){
   // el final se suma al principio para que la pista se repita sin cortes
-  const L=Math.floor(sr*LOOP),fin=new (window.AudioBuffer)({numberOfChannels:2,length:L,sampleRate:sr});
+  const L=Math.floor(sr*loopSec),fin=new (window.AudioBuffer)({numberOfChannels:2,length:L,sampleRate:sr});
   for(let c=0;c<2;c++){const a=out.getChannelData(c),d=fin.getChannelData(c);d.set(a.subarray(0,L));for(let i=L;i<a.length;i++)d[i-L]+=a[i];}
   // todas las pistas con el mismo volumen percibido (RMS) y picos suavizados
   {let sum=0;for(let c=0;c<2;c++){const d=fin.getChannelData(c);for(let i=0;i<L;i++)sum+=d[i]*d[i]}const rms=Math.sqrt(sum/(2*L))||1,k=0.16/rms;
    for(let c=0;c<2;c++){const d=fin.getChannelData(c);for(let i=0;i<L;i++){const v=d[i]*k;d[i]=Math.abs(v)<0.7?v:Math.sign(v)*(0.7+0.28*Math.tanh((Math.abs(v)-0.7)/0.28))}}}
   return fin;
+}
+const SCALES={minor:[0,2,3,5,7,8,10],major:[0,2,4,5,7,9,11],phryg:[0,1,3,5,7,8,10],harm:[0,2,3,5,7,8,11]};
+function sdeg(T,d,oct=0){const sc=SCALES[T.mode],n=sc.length,o=Math.floor(d/n);return T.root+sc[((d%n)+n)%n]+12*(o+oct)}
+async function renderGen(T,sr,key){
+  const beat=60/T.bpm,st=beat/4,bar=beat*4,BARS=8,loop=bar*BARS,TAIL=1.5;
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(2,Math.floor(sr*(loop+TAIL)),sr);
+  const r=rng(key.length*7919+T.bpm);
+  const master=oc.createGain();master.gain.value=0.8;const comp=oc.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=0.003;comp.release.value=0.15;master.connect(comp).connect(oc.destination);
+  const rv=oc.createConvolver(),rl=Math.floor(sr*0.7),ib=oc.createBuffer(2,rl,sr);for(let c=0;c<2;c++){const d=ib.getChannelData(c);for(let i=0;i<rl;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/rl,3)}rv.buffer=ib;
+  const rvIn=oc.createGain();rvIn.gain.value=0.3;rvIn.connect(rv).connect(master);
+  const dl=oc.createDelay(2);dl.delayTime.value=beat*0.75;const dfb=oc.createGain();dfb.gain.value=0.32;const dIn=oc.createGain();dIn.gain.value=0.28;dIn.connect(dl);dl.connect(dfb).connect(dl);dl.connect(master);
+  const drum=oc.createGain();drum.gain.value=1;drum.connect(master);
+  const nb=oc.createBuffer(1,sr,sr),nd=nb.getChannelData(0);for(let i=0;i<sr;i++)nd[i]=Math.random()*2-1;
+  const env=(g,t,a,d,pk)=>{g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(pk,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d)};
+  const noise=(t,d,type,f,q,v,out=drum)=>{const s2=oc.createBufferSource();s2.buffer=nb;const fl=oc.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const g=oc.createGain();s2.connect(fl).connect(g).connect(out);env(g,t,0.002,d,v);s2.start(t,Math.random()*0.5,d+0.05)};
+  const kick=(t,v=1)=>{const o=oc.createOscillator();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(46,t+0.12);const g=oc.createGain();o.connect(g).connect(drum);env(g,t,0.002,0.34,0.95*v);o.start(t);o.stop(t+0.4);noise(t,0.008,'highpass',3000,0.7,0.25*v)};
+  const snare=(t,v=1)=>{noise(t,0.17,'bandpass',1900,0.8,0.55*v);noise(t,0.12,'bandpass',1900,0.8,0.12*v,rvIn);const o=oc.createOscillator();o.type='triangle';o.frequency.value=190;const g=oc.createGain();o.connect(g).connect(drum);env(g,t,0.002,0.09,0.3*v);o.start(t);o.stop(t+0.12)};
+  const clap=(t,v=1)=>{for(let k=0;k<3;k++)noise(t+k*0.011,0.05+k*0.03,'bandpass',1300,1,0.4*v);noise(t,0.2,'bandpass',1300,1,0.12*v,rvIn)};
+  const hat=(t,v=1,open=false)=>noise(t,open?0.22:0.04,'highpass',7800,0.7,0.16*v);
+  const crash=t=>{noise(t,1.6,'highpass',4500,0.5,0.22);noise(t,1.4,'highpass',4500,0.5,0.1,rvIn)};
+  const tom=(t,f,v=1)=>{const o=oc.createOscillator();o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*0.62,t+0.25);const g=oc.createGain();o.connect(g).connect(drum);env(g,t,0.003,0.3,0.6*v);o.start(t);o.stop(t+0.35)};
+  const taiko=(t,v=1)=>{const o=oc.createOscillator();o.frequency.setValueAtTime(78,t);o.frequency.exponentialRampToValueAtTime(42,t+0.4);const g=oc.createGain();o.connect(g).connect(drum);const g2=oc.createGain();o.connect(g2).connect(rvIn);env(g,t,0.003,0.9,0.95*v);env(g2,t,0.003,0.6,0.4*v);o.start(t);o.stop(t+1);noise(t,0.18,'lowpass',380,0.7,0.5*v)};
+  const blip=(t,f,d,v)=>{const o=oc.createOscillator();o.type='square';o.frequency.value=f;const g=oc.createGain();o.connect(g).connect(drum);env(g,t,0.002,d,v);o.start(t);o.stop(t+d+0.02)};
+  const bassG=oc.createGain();bassG.gain.value=0.5;bassG.connect(master);
+  const bassNote=(n,t,d,kind)=>{const f=mf(n);
+    if(kind==='808'){const o=oc.createOscillator();o.frequency.setValueAtTime(f*1.9,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);const g=oc.createGain();o.connect(g).connect(bassG);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(1.1,t+0.005);g.gain.setValueAtTime(1.1,t+d*0.7);g.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);return}
+    const fl=oc.createBiquadFilter();fl.type='lowpass';fl.Q.value=kind==='wobble'?8:3;const g=oc.createGain();fl.connect(g).connect(bassG);
+    const os=kind==='reese'?[-14,14]:[0];os.forEach(dt=>{const o=oc.createOscillator();o.type=kind==='walk'?'triangle':'sawtooth';o.frequency.value=f;o.detune.value=dt;o.connect(fl);o.start(t);o.stop(t+d+0.05)});
+    if(kind==='wobble'){const l=oc.createOscillator(),lg=oc.createGain();l.frequency.value=T.bpm/60*(r()<0.5?2:4)/2;lg.gain.value=700;fl.frequency.value=800;l.connect(lg).connect(fl.frequency);l.start(t);l.stop(t+d)}
+    else{fl.frequency.setValueAtTime(kind==='reese'?520:1400,t);fl.frequency.exponentialRampToValueAtTime(kind==='reese'?380:220,t+Math.min(d,0.25))}
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.75,t+0.005);g.gain.setValueAtTime(0.75,t+Math.max(0.01,d-0.04));g.gain.exponentialRampToValueAtTime(0.0001,t+d)};
+  const leadG=oc.createGain();leadG.gain.value=0.22;leadG.connect(master);leadG.connect(dIn);
+  const lead=(n,t,d,wave,v=1)=>{const fl=oc.createBiquadFilter();fl.type='lowpass';fl.frequency.value=wave==='square'?3200:4200;const g=oc.createGain();fl.connect(g).connect(leadG);
+    (wave==='sawtooth'?[-8,8]:[0]).forEach(dt=>{const o=oc.createOscillator();o.type=wave;o.frequency.value=mf(n);o.detune.value=dt;o.connect(fl);o.start(t);o.stop(t+d+0.05)});env(g,t,0.004,d,0.9*v)};
+  const padG=oc.createGain();padG.gain.value=0.1;padG.connect(master);padG.connect(rvIn);
+  const pad=(ch,t,d)=>{const fl=oc.createBiquadFilter();fl.type='lowpass';fl.frequency.value=1100;const g=oc.createGain();fl.connect(g).connect(padG);ch.forEach(n=>[-9,9].forEach(dt=>{const o=oc.createOscillator();o.type='sawtooth';o.frequency.value=mf(n);o.detune.value=dt;o.connect(fl);o.start(t);o.stop(t+d+0.6)}));g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.8,t+Math.min(0.6,d/3));g.gain.setValueAtTime(0.8,t+d-0.1);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.5)};
+  const motif=[0,2,4,2,4,7,6,4].map(()=>Math.floor(r()*5));
+  for(let b=0;b<BARS;b++){
+    const t0=b*bar,deg=T.prog[Math.floor(b/2)%T.prog.length],ch=[sdeg(T,deg),sdeg(T,deg+2),sdeg(T,deg+4)].map(n=>n+12),rootB=sdeg(T,deg)-12,late=b>=BARS/2,fill=(b%(BARS/2)===BARS/2-1);
+    if(b%(BARS/2)===0)crash(t0);
+    // batería
+    for(let i=0;i<16;i++){const t=t0+i*st,swing=(T.drums==='spy'&&i%2)?st*0.25:0,tt=t+swing;
+      switch(T.drums){
+        case'four':case'house':if(i%4===0)kick(tt);if(i===4||i===12)clap(tt,0.9);if(i%4===2)hat(tt,T.drums==='house'?1.3:1,true);else if(i%2===1)hat(tt,0.5);break;
+        case'techno':if(i%4===0)kick(tt);if(i===4||i===12)clap(tt,0.6);hat(tt,i%2?0.5:0.8);if(i===3||i===11)tom(tt,420,0.4);break;
+        case'rock':if(i===0||i===8||i===10||(late&&i===6))kick(tt);if(i===4||i===12)snare(tt);if(i%2===0)hat(tt,0.9);break;
+        case'dnb':if(i===0||i===10)kick(tt);if(i===4||i===12)snare(tt,1.1);if(i%2===0)hat(tt,0.8);else if(r()<0.4)hat(tt,0.35);if(i===7&&r()<0.5)snare(tt,0.3);break;
+        case'half':if(i===0||(i===9&&r()<0.7))kick(tt);if(i===8)snare(tt,1.2);if(i%2===0)hat(tt,0.7);break;
+        case'trap':if(i===0||i===7||i===10)kick(tt,0.8);if(i===8)clap(tt,1.1);if(late&&i>=12&&b%2){hat(tt,0.7);hat(tt+st/2,0.6)}else hat(tt,i%2?0.55:0.85);break;
+        case'trailer':if(i===0||i===6||i===8||i===11){kick(tt);taiko(tt,0.6)}if(i===4||i===12)snare(tt,1.1);if(i%2===0)hat(tt,0.6);break;
+        case'taiko':if([0,3,6,8,11,12,14].includes(i))taiko(tt,i%4===0?1:0.6);if(i===4||i===12)snare(tt,0.5);break;
+        case'tribal':if(i===0||i===8)kick(tt);if([0,3,6,10,12].includes(i))tom(tt,[180,140,220][i%3],0.8);hat(tt,0.35);break;
+        case'spy':if(i===0||i===7||i===10)kick(tt,0.7);if(i===4||i===12)noise(tt,0.14,'bandpass',2500,0.6,0.35);if(i%2===0)hat(tt,0.6,i===14);break;
+        case'chip':if(i===0||i===8||(late&&i===10))blip(tt,110,0.08,0.5);if(i===4||i===12)noise(tt,0.08,'highpass',1500,0.5,0.45);if(i%2===0)noise(tt,0.02,'highpass',9000,0.5,0.15);break;
+      }
+      if(fill&&i>=12){tom(tt,[260,200,160,120][i-12],0.9)}
+    }
+    if(T.hits&&b%4===0){taiko(t0,1.2);ch.forEach(n=>lead(n-12,t0,1.2,'sawtooth',0.9))}
+    // bajo
+    for(let i=0;i<16;i++){const t=t0+i*st;
+      switch(T.bass){
+        case'8th':if(i%2===0)bassNote(rootB+(i===14&&r()<0.5?12:0),t,st*1.8,'saw');break;
+        case'16th':bassNote(rootB+((i%8===6)?12:0),t,st*0.9,'saw');break;
+        case'off':if(i===0)bassNote(rootB,t,st*1.5,'saw');if(i%4===2)bassNote(rootB+(late&&i===14?12:0),t,st*1.6,'saw');break;
+        case'walk':if([0,3,6,8,11,14].includes(i))bassNote(rootB+[0,3,7,10,7,3][[0,3,6,8,11,14].indexOf(i)],t,st*2.5,'walk');break;
+        case'808':if(i===0||i===7||i===10)bassNote(rootB,t,i===0?st*6:st*3,'808');break;
+        case'reese':if(i===0)bassNote(rootB,t,bar*0.98,'reese');break;
+        case'wobble':if(i===0||i===8)bassNote(rootB,t,bar/2*0.98,'wobble');break;
+      }
+    }
+    // melodía / acompañamiento
+    const oct=late?12:0,wave=T.wave||'sawtooth';
+    for(let i=0;i<16;i++){const t=t0+i*st;
+      switch(T.lead){
+        case'arp16':if(b>=2)lead(ch[[0,1,2,1][i%4]]+12+(i>=8?oct:0),t,st*0.8,wave,0.7);break;
+        case'arp8':if(i%2===0)lead(ch[[0,1,2,1,2,0,1,2][(i/2)|0]]+12+oct,t,st*1.6,'sawtooth',0.7);break;
+        case'stab':if([0,3,6,10,12].includes(i))ch.forEach(n=>lead(n+oct,t,st*0.9,'sawtooth',0.55));break;
+        case'saw':if([0,3,6,8,10,12,14].includes(i)&&b>=2)lead(sdeg(T,deg+motif[(i/2)|0]+(i===14?2:0))+24+(late&&b%2?0:-12)+12,t,st*1.7,'sawtooth',0.8);break;
+        case'chip':lead(ch[[0,1,2,1,0,2,1,2][i%8]]+24,t,st*0.7,'square',0.65);break;
+        case'pluck':if(i%2===0&&r()<0.75)lead(sdeg(T,deg+motif[i%8])+24+oct,t,st*1.2,'triangle',1.1);break;
+        case'tick':blip(t,i%4===0?1800:1200,0.02,i%4===0?0.25:0.12);if(late&&i%2===0)lead(ch[[0,1,2,1][(i/2)%4]]+24,t,st*1.4,'sawtooth',0.6);break;
+      }
+    }
+    if(T.pad&&b%2===0)pad(ch,t0,bar*2);
+    if(T.riser&&b%(BARS/2)>=BARS/2-2){const g=oc.createGain(),s2=oc.createBufferSource();s2.buffer=nb;s2.loop=true;const fl=oc.createBiquadFilter();fl.type='bandpass';fl.Q.value=2;fl.frequency.setValueAtTime(400,t0);fl.frequency.exponentialRampToValueAtTime(7000,t0+bar);s2.connect(fl).connect(g).connect(master);g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(b%(BARS/2)===BARS/2-1?0.25:0.08,t0+bar);g.gain.linearRampToValueAtTime(0,t0+bar+0.02);s2.start(t0);s2.stop(t0+bar+0.05)}
+  }
+  const out=await new Promise((res,rej)=>{oc.oncomplete=e=>res(e.renderedBuffer);const p=oc.startRendering();if(p&&p.then)p.then(res,rej)});
+  return finishLoop(out,sr,loop);
 }
 async function getMusicBuffer(sr,ac){
   const k=settings.musicPreset;
