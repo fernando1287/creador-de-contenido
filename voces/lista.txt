@@ -1,2 +1,3 @@
 es/es_MX/ald/medium/es_MX-ald-medium.onnx
 en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx
+es/es_ES/davefx/medium/es_ES-davefx-medium.onnx
