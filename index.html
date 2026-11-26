@@ -277,7 +277,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 22 · 25 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 23 · 25 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </div>
     </aside>
@@ -507,7 +507,11 @@ const TTS_URLS=['https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/+e
 let ttsIdx=0,ttsLastErr='';
 // Si no se puede descargar algo de la voz, se intenta desde otras direcciones (espejos) y el error dice cuál falló
 const VOICE_HOSTS=/^https:\/\/(huggingface\.co|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net)\//;
+// voces guardadas en GitHub (para teléfonos donde HuggingFace está bloqueado)
+const GH_VOICES='https://fernando1287.github.io/creador-de-contenido/voces/';
+const GH_HOSTED=['es/es_MX/ald/medium/es_MX-ald-medium.onnx','en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx'];
 function voiceMirrors(u){const out=[u];let m;
+  if((m=u.match(/^https:\/\/huggingface\.co\/(?:diffusionstudio|rhasspy)\/piper-voices\/resolve\/main\/(.+)$/))&&GH_HOSTED.includes(m[1].replace(/\.json$/,''))){out.unshift(GH_VOICES+m[1])}
   if((m=u.match(/^https:\/\/huggingface\.co\/diffusionstudio\/piper-voices\/resolve\/main\/(.+)$/)))out.push('https://huggingface.co/rhasspy/piper-voices/resolve/main/'+m[1],'https://hf-mirror.com/rhasspy/piper-voices/resolve/main/'+m[1]);
   else if((m=u.match(/^https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/onnxruntime-web\/([\d.]+)\/(.+)$/)))out.push(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${m[1]}/dist/${m[2]}`,`https://unpkg.com/onnxruntime-web@${m[1]}/dist/${m[2]}`);
   else if((m=u.match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/(@diffusionstudio\/piper-wasm.+|onnxruntime-web.+)$/)))out.push('https://unpkg.com/'+m[1]);
@@ -518,7 +522,7 @@ function voiceMirrors(u){const out=[u];let m;
     if(!VOICE_HOSTS.test(url))return of(input,init);
     const list=voiceMirrors(url);let last=null;const tried=[];
     for(let i=0;i<list.length;i++){const host=new URL(list[i]).host;
-      try{const r=await of(i===0?input:list[i],init);if(r.ok||r.status===206||r.status===304)return r;last=new Error(`el servidor ${host} respondió ${r.status}`)}
+      try{const r=await of(list[i]===url?input:list[i],init);if(r.ok||r.status===206||r.status===304)return r;last=new Error(`el servidor ${host} respondió ${r.status}`)}
       catch(e){tried.push(host);last=new TypeError(`no se pudo conectar con ${[...new Set(tried)].join(', ')}`)}
       console.warn('voz: falló',list[i],last.message)}
     throw last};
@@ -745,7 +749,7 @@ $('#ttsDiag').onclick=async()=>{
   if(opfs)log(true,`Almacenamiento privado (OPFS) · createWritable: ${FileSystemFileHandle.prototype.createWritable&&FileSystemFileHandle.prototype.createWritable.toString().includes('resolve')?'reemplazo para Safari':'nativo'}`);
   try{const e=await navigator.storage.estimate();log(null,`Espacio: ${mbs(e.usage||0)} usados de ${mbs(e.quota||0)}`)}catch{}
   if(!alive)return;
-  for(const [name,u] of [['Motor (jsdelivr)','https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/package.json'],['Voces (huggingface)','https://huggingface.co/diffusionstudio/piper-voices/resolve/main/voices.json'],['Voces respaldo (huggingface rhasspy)','https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json'],['Motor ONNX (cdnjs)','https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/ort.min.js'],['Respaldo (unpkg)','https://unpkg.com/onnxruntime-web@1.18.0/package.json']]){
+  for(const [name,u] of [['Motor (jsdelivr)','https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/package.json'],['Voces (huggingface)','https://huggingface.co/diffusionstudio/piper-voices/resolve/main/voices.json'],['Voces respaldo (huggingface rhasspy)','https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json'],['Voces en tu GitHub','https://fernando1287.github.io/creador-de-contenido/voces/es/es_MX/ald/medium/es_MX-ald-medium.onnx.json'],['Motor ONNX (cdnjs)','https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.18.0/ort.min.js'],['Respaldo (unpkg)','https://unpkg.com/onnxruntime-web@1.18.0/package.json']]){
     const t0=performance.now();try{const r=await withTimeout((window.__origFetch||fetch)(u,{method:'HEAD',cache:'no-store'}),15000);log(true,`Conexión ${name}: ok (${r.status}, ${Math.round(performance.now()-t0)} ms)`)}catch(e){log(false,`Conexión ${name}: ${e.message}`)}}
   if(!alive)return;
   let tts=null;
