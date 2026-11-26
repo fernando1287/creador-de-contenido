@@ -32,7 +32,7 @@ select{background:#10161e;color:var(--text);border:1px solid var(--line);border-
 .hero h2{font-size:18px;margin:0 0 5px}.hero p{margin:0;color:var(--muted);font-size:13px}
 .hero-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
 .step{color:var(--acc);font-size:12px;font-weight:750;letter-spacing:.08em}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:20px;align-items:start}
 .scenes{display:grid;gap:13px}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s}
 .scene.sel{border-color:#b8476a;box-shadow:0 0 0 1px #b8476a inset}
@@ -187,6 +187,18 @@ a.smallbtn{color:inherit;text-decoration:none}
 .mini .snip{font-size:13px;color:#dfe7ef;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mini .mic{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mini .open{font-size:12px;color:var(--acc);flex:none}
+.pvwrap{display:grid;grid-template-columns:78px minmax(0,1fr) 78px;gap:8px;align-items:center}
+.pvwrap .preview{max-width:100%;margin:0 auto}
+.pvside{display:flex;flex-direction:column;gap:6px;align-self:center}
+.pvb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 3px;min-height:52px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);color:inherit;text-decoration:none;font-size:10.5px;font-weight:650;line-height:1.15;text-align:center;cursor:pointer;width:100%}
+.pvb .pi{font-size:18px;line-height:1}
+.pvb .pl{display:block}
+.pvb.hot{background:var(--grad);border:0;color:#fff}
+.pvb:active{filter:brightness(1.25)}
+.portal-bar.compact{padding:7px 9px;border-radius:12px;margin-bottom:10px;gap:8px;flex-wrap:nowrap}
+.portal-bar.compact .pt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.portal-bar.compact .pt b{display:inline;font-size:13px;margin-right:6px}
+.portal-bar.compact .smallbtn{flex:none;white-space:nowrap}
 .hidden{display:none!important}
 @media(max-width:850px){.layout{display:flex;flex-direction:column;gap:14px;align-items:stretch}.side{display:contents}.side>.card{order:3}.side>.card.pv{order:1}.scenes{order:2}.preview{height:min(360px,55vh)}.scene-body{grid-template-columns:145px 1fr}}
 @media(max-width:580px){.brand p,.hero .step,.hero p{display:none}.hero h2{font-size:15px;margin:0}.hero{gap:10px!important;margin-bottom:14px}.top{margin-bottom:14px}.logo{width:38px;height:38px;font-size:18px}.hero-actions .btn{padding:8px 9px!important;font-size:12px!important}.preview{height:min(330px,48vh)!important}.top-actions{justify-content:flex-start}.top-actions .btn{flex:1 1 auto;justify-content:center}.app{padding:18px 12px 35px}.top{align-items:flex-start;flex-direction:column;gap:12px}.brand h1{font-size:18px}.top-actions .btn{padding:8px 10px;font-size:12px}.hero{flex-direction:column;align-items:stretch;padding:16px}.hero-actions{justify-content:stretch}.hero-actions .btn{flex:1;justify-content:center;font-size:13px}.scene{padding:12px}.scene-body{grid-template-columns:1fr}.drop{aspect-ratio:16/9}.scene-tools .iconbtn{width:29px;height:29px}}
@@ -194,36 +206,45 @@ a.smallbtn{color:inherit;text-decoration:none}
 </head>
 <body>
 <main class="app">
+  <section class="portal-bar compact hidden" id="portalBar">
+    <a class="smallbtn" id="backPortal" href="../">← Volver al portal</a>
+    <div class="pt" id="portalTxt"></div>
+    <button class="smallbtn hidden" id="useScript">📝 Guion</button>
+  </section>
   <header class="top">
     <div class="brand"><div class="logo">▶</div><div><h1>Creador de Contenido</h1><p>Une fotos, videos, texto y voz en un solo video para redes</p></div></div>
-    <div class="top-actions">
-      <button class="btn primary hidden" id="installBtn">📲 Instalar app</button><button class="btn" id="hdArchive">🗄 Archivar</button><button class="btn" id="hdNew">➕ Nuevo</button><button class="btn" id="hdImport">🤖 Importar</button><button class="btn" id="hdProjects">📁 Proyectos<span id="projCount"></span></button><button class="btn primary" id="makeVideoTop">🎬 Crear video</button>
-    </div>
   </header>
 
   <section class="portal-bar hidden" id="importBar" style="border-color:#a8743d;background:linear-gradient(120deg,#2a1f14,#151c25)">
     <div class="pt"><b>¿Vienes de la app anterior del Creador?</b>Abre aquí la copia de tu proyecto que guardaste.</div>
     <div class="acts"><button class="smallbtn" id="importGo" style="background:var(--grad);border:0;color:#fff;font-weight:700">📂 Abrir la copia</button><button class="smallbtn" id="importNo">✕</button></div>
   </section>
-  <section class="portal-bar hidden" id="portalBar">
-    <div class="pt" id="portalTxt"></div>
-    <div class="acts"><button class="smallbtn hidden" id="useScript">📝 Usar el guion del tema</button><a class="smallbtn" id="backPortal" href="../">← Volver al portal</a></div>
-  </section>
 
-  <section class="hero">
-    <div><div class="step">FOTO / VIDEO + TEXTO + VOZ</div><h2>Cuenta tu historia escena por escena</h2><p>Carga una foto o un video, escribe o dicta el texto, graba tu voz y ajusta cuánto dura cada escena.</p></div>
-    <div class="hero-actions">
-      <a class="btn" id="openImages" href="#" style="text-decoration:none;color:inherit">🖼 Buscar imágenes</a><button class="btn" id="openCutter">✂️ Cortar un video</button><label class="btn">🖼 Cargar varias<input id="addMany" type="file" accept="image/*,video/*" multiple hidden></label>
-      <button class="btn primary" id="addScene">＋ Agregar escena</button>
-    </div>
-  </section>
+
+
 
   <div class="layout">
     <section class="scenes" id="scenes"></section>
     <aside class="side">
       <div class="card pv">
         <h3>Vista previa <span id="totalTime">0:00</span></h3>
-        <div class="preview" id="preview"><canvas id="canvas" width="720" height="1280"></canvas></div>
+        <div class="pvwrap">
+          <div class="pvside">
+            <button class="pvb hidden" id="installBtn"><span class="pi">📲</span><span class="pl">Instalar</span></button>
+            <button class="pvb" id="hdProjects"><span class="pi">📁</span><span class="pl">Proyectos<span id="projCount"></span></span></button>
+            <button class="pvb" id="hdArchive"><span class="pi">🗄</span><span class="pl">Archivar</span></button>
+            <button class="pvb" id="hdNew"><span class="pi">➕</span><span class="pl">Nuevo</span></button>
+            <button class="pvb" id="hdImport"><span class="pi">🤖</span><span class="pl">Importar</span></button>
+          </div>
+          <div class="preview" id="preview"><canvas id="canvas" width="720" height="1280"></canvas></div>
+          <div class="pvside">
+            <button class="pvb hot" id="makeVideoTop"><span class="pi">🎬</span><span class="pl">Crear video</span></button>
+            <button class="pvb hot" id="addScene"><span class="pi">＋</span><span class="pl">Escena</span></button>
+            <label class="pvb"><span class="pi">🖼</span><span class="pl">Cargar varias</span><input id="addMany" type="file" accept="image/*,video/*" multiple hidden></label>
+            <button class="pvb" id="openCutter"><span class="pi">✂️</span><span class="pl">Cortar video</span></button>
+            <a class="pvb" id="openImages" href="#"><span class="pi">🔎</span><span class="pl">Imágenes</span></a>
+          </div>
+        </div>
         <div class="progress"><i id="progress"></i></div>
         <div class="preview-controls">
           <button class="smallbtn" id="playPreview">▶ Reproducir</button>
@@ -297,7 +318,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 28 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 29 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -1634,7 +1655,7 @@ function initPortalUI(){
   if(pctx){$('#portalTxt').innerHTML=`📺 Video para <b>${esc(pctx.canal||chanName(pctx.c))}</b>${pctx.tema?esc((pctx.fecha?pctx.fecha+' · ':'')+(pctx.titulo||'')):'Canal del portal'}`;
     $('#useScript').classList.toggle('hidden',!(pctx.guion||pctx.titulo));
     if(!$('#caption').value)$('#caption').value=[pctx.titulo,'#'+String(pctx.canal||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]/g,'')].filter(Boolean).join('\n\n');}
-  else $('#portalTxt').innerHTML='📺 <b>Portal Madre de Canales</b>Elige el canal y el día al guardar tu video.';
+  else $('#portalTxt').innerHTML='📺 <b>Portal Madre de Canales</b>';
   $('#portalBar').classList.toggle('hidden',!inPortal);
   if(inPortal){
     $('#portalSaveIn').classList.remove('hidden');
