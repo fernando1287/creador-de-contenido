@@ -40,6 +40,8 @@ select{background:#10161e;color:var(--text);border:1px solid var(--line);border-
 .scinfo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px}.scinfo .who{font-weight:700;color:#ffb27a;background:#2a1c14;border-radius:20px;padding:3px 9px}.scinfo .idea{color:var(--muted);flex:1;min-width:120px}.scinfo .smallbtn{padding:4px 8px}
 .gpbox textarea{width:100%;font-size:12px}.gpbox input{width:100%;background:#10161e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 10px}.gpbox .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gpbox label{font-size:12px;color:var(--muted);display:grid;gap:3px}.gpbox label.check{display:flex;align-items:center;gap:8px;margin-top:6px}.gpstep{font-weight:800;font-size:13px;margin:10px 0 4px}
 .numgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:10px}.nbtn{padding:11px 0;border-radius:11px;background:#202a36;border:1px solid var(--line);font-weight:800;font-size:15px}.nbtn:active,.nbtn:hover{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);border-color:transparent}
+.tprow{display:flex;gap:6px}.tprow input{flex:1}.tplist{max-height:250px;overflow:auto;display:grid;gap:6px;margin-top:6px;padding-right:2px}.tpcard{display:flex;gap:6px;align-items:flex-start;background:#10161e;border:1px solid var(--line);border-radius:11px;padding:8px}.tpcard.on{border-color:#ff9a3c;background:#2a1c14}.tpmain{flex:1;display:grid;gap:2px;cursor:pointer;min-width:0}.tpmain b{font-size:13px}.tpmain span{font-size:11px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tpmain i{font-size:11px;color:#ffb27a;font-style:normal}.tpbtns{display:grid;gap:4px}.tpbtns .smallbtn{padding:4px 7px}.tpedit{background:#151c25;border:1px solid #ff9a3c66;border-radius:12px;padding:10px;margin-top:8px;display:grid;gap:6px}
+.nmode button{flex:1;padding:9px 4px;border-radius:8px;background:none;font-weight:700;font-size:13px;color:var(--muted)}.nmode button.on{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);color:#fff}
 .lockbar{grid-column:1/-1;font-size:12px;font-weight:600;color:#ffb27a;background:#2a1c14;border:1px solid #ff9a3c55;border-radius:10px;padding:8px 10px}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s}
 .scene.sel{border-color:#b8476a;box-shadow:0 0 0 1px #b8476a inset}
@@ -327,7 +329,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 33 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 34 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -1214,8 +1216,8 @@ $('#exportBtn').onclick=()=>{if(engine){if(engine.record)engine.stop=true;return
 /* ---------- agregar ---------- */
 function addMany(n){n=Math.max(1,Math.min(50,n|0));let last=null;for(let k=0;k<n;k++){last=makeScene({});scenes.push(last)}selectedId=last.id;draw();renderIdleSoon();closeProj();setTimeout(()=>root.firstElementChild&&root.firstElementChild.scrollIntoView({behavior:'smooth',block:'center'}),60);toast(n===1?'＋ 1 escena nueva':`＋ ${n} escenas nuevas`)}
 $('#addScene').onclick=()=>{
-  openProj('＋ ¿Cuántas escenas quieres?',`<p class="micro" style="margin:0;font-size:12px">Toca el número de escenas nuevas que quieres agregar.</p><div class="numgrid">${Array.from({length:50},(_,k)=>`<button class="nbtn" data-n="${k+1}">${k+1}</button>`).join('')}</div>`);
-  $('#pbBody').querySelectorAll('.nbtn').forEach(b=>b.onclick=()=>addMany(+b.dataset.n));
+  openProj('＋ ¿Cuántas escenas quieres?',`<p class="micro" style="margin:0;font-size:12px">Toca el número de escenas nuevas que quieres agregar.</p><div class="seg nmode" style="margin-top:10px"><button data-m="0" class="on">＋ Escenas vacías</button><button data-m="1">📝 Con Guion IA</button></div><div class="numgrid">${Array.from({length:50},(_,k)=>`<button class="nbtn" data-n="${k+1}">${k+1}</button>`).join('')}</div>`);
+  $('#pbBody').querySelectorAll('.nbtn').forEach(b=>b.onclick=()=>$('#pbBody').querySelector('.nmode button.on').dataset.m==='1'?openScriptTool(+b.dataset.n):addMany(+b.dataset.n));$('#pbBody').querySelectorAll('.nmode button').forEach(b=>b.onclick=()=>{$('#pbBody').querySelectorAll('.nmode button').forEach(x=>x.classList.toggle('on',x===b))});
 };
 $('#addMany').onchange=async e=>{
   const files=[...e.target.files].filter(f=>(f.type||'').startsWith('image/')||isVideoFile(f));e.target.value='';
@@ -1476,11 +1478,28 @@ function openImport(){
 const VOZ_ALIAS={normal:'normal',locutor:'locutor',narrador:'locutor',suave:'suave',grave:'grave',nino:'nino','niño':'nino',nina:'nino','niña':'nino',infantil:'nino',ardilla:'ardilla',aguda:'ardilla',monstruo:'monstruo',robot:'robot',misterio:'misterio',misteriosa:'misterio',eco:'eco',radio:'radio',telefono:'telefono','teléfono':'telefono',estadio:'estadio'};
 const VOZ_ROT=['locutor','grave','suave','nino','misterio','ardilla','monstruo','robot'];
 function copyText(t){const done=()=>toast('Copiado ✓');if(navigator.clipboard&&isSecureContext)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t));else fallbackCopy(t);function fallbackCopy(x){const ta=document.createElement('textarea');ta.value=x;document.body.append(ta);ta.select();try{document.execCommand('copy');done()}catch{toast('No pude copiar; mantén presionado el texto y copia.')}ta.remove()}}
+const TPL_KEY='guionPlantillas';
+const TPL_SEED=[
+ ['🎭 Escena dramática','Historia dramática con un conflicto fuerte entre los personajes. Empieza con un momento tranquilo, luego aparece el problema, la tensión sube con diálogos intensos, llega un momento de máxima emoción y termina con un final impactante o una lección.','Narrador, Protagonista, Antagonista','dramático, emotivo, frases con fuerza'],
+ ['👻 Terror','Historia de terror contada como si fuera real. Empieza con algo normal, aparecen señales extrañas, el miedo crece poco a poco, hay un susto fuerte y termina con un final inquietante que deje con ganas de más.','Narrador, Testigo, La aparición','suspenso, oscuro, frases cortas'],
+ ['🔍 Misterio y enigmas','Video tipo documental. Empieza con una pregunta que enganche, cuenta los hechos y datos más sorprendentes, presenta las teorías que existen y termina con una pregunta abierta para que el público comente.','Narrador','misterioso, intrigante, con datos'],
+ ['🏛 Leyenda mexicana','Cuenta una leyenda mexicana tradicional. Presenta el lugar y la época, cuenta lo que pasó con diálogos de los personajes, el momento más impactante de la leyenda y cierra con lo que se dice hasta hoy.','Narrador, Abuela, Protagonista de la leyenda','tradicional, misterioso, cálido'],
+ ['🦅 Historia mexica','Historia ambientada en el mundo mexica (azteca). Muestra la ciudad, las costumbres y un acontecimiento importante, con diálogos entre los personajes, y termina con un dato histórico que sorprenda.','Narrador, Guerrero águila, Sacerdote, Tlatoani','épico, histórico, solemne'],
+ ['😂 Comedia','Situación cotidiana que se va complicando de forma graciosa. Diálogos rápidos entre los personajes, malentendidos, un remate chistoso al final.','Narrador, Personaje 1, Personaje 2','divertido, ritmo rápido'],
+ ['💪 Motivacional','Mensaje motivacional. Empieza con una situación difícil, muestra la lucha y el esfuerzo, el momento de cambio y termina con una frase poderosa para el público.','Narrador','inspirador, positivo, frases memorables'],
+ ['🚀 Ciencia ficción','Historia en el futuro o en el espacio. Presenta el mundo, aparece un descubrimiento o peligro, los personajes reaccionan y discuten, y termina con un giro inesperado.','Narrador, Capitana, Robot','épico, futurista, con suspenso'],
+ ['💡 ¿Sabías que…?','Video de datos curiosos. Empieza con un gancho "¿Sabías que…?", da varios datos sorprendentes uno por escena y termina invitando a seguir la cuenta.','Narrador','curioso, rápido, sorprendente'],
+ ['❤️ Romance','Historia de amor corta. Cómo se conocen, un momento especial, un problema que los separa y un final emotivo.','Narrador, Ella, Él','romántico, emotivo, tierno']];
+function tplLoad(){let a=null;try{a=JSON.parse(localStorage.getItem(TPL_KEY)||'null')}catch{}if(!Array.isArray(a)){a=TPL_SEED.map((x,k)=>({id:'t'+(k+1),name:x[0],story:x[1],chars:x[2],style:x[3],n:10,secs:60}));tplSave(a)}return a}
+function tplSave(a){try{localStorage.setItem(TPL_KEY,JSON.stringify(a))}catch{toast('No pude guardar las plantillas.')}}
 function buildScriptPrompt(o){
   const chars=o.chars.trim()?`Personajes: ${o.chars.trim()}.${/narrador/i.test(o.chars)?'':' Puede haber también un Narrador.'}`:'Personajes: un Narrador (agrega otros personajes solo si ayudan a la historia).';
-  return `Eres guionista de videos cortos para redes sociales (TikTok, Reels, Shorts). Escribe un guion sobre: ${o.topic.trim()||'[ESCRIBE AQUÍ EL TEMA]'}.
+  const head=o.story&&o.story.trim()
+    ?`Escribe un guion${o.tplName?` de tipo "${o.tplName.replace(/^[^\p{L}\d]+/u,'')}"`:''}${o.topic.trim()?` sobre: ${o.topic.trim()}`:''}.\nLo que debe pasar en la historia: ${o.story.trim()}`
+    :`Escribe un guion sobre: ${o.topic.trim()||'[ESCRIBE AQUÍ EL TEMA]'}.`;
+  return `Eres guionista de videos cortos para redes sociales (TikTok, Reels, Shorts). ${head}
 ${chars}
-Duración total aproximada: ${o.secs} segundos, en unas ${o.n} escenas.${o.style.trim()?`\nEstilo: ${o.style.trim()}.`:''}
+Debe tener EXACTAMENTE ${o.n} escenas, con una duración total aproximada de ${o.secs} segundos. Reparte la historia en esas ${o.n} escenas (inicio, desarrollo y final).${o.style.trim()?`\nEstilo: ${o.style.trim()}.`:''}
 
 REGLAS MUY IMPORTANTES:
 1. Cada escena es UNA sola frase corta (máximo 20 palabras) dicha por UN solo personaje.
@@ -1551,40 +1570,78 @@ async function scriptToScenes(items,opt){
   toast(`✓ ${items.length} escena${items.length>1?'s':''} creada${items.length>1?'s':''}${nChars?` · ${nChars} personaje${nChars>1?'s':''} con su propia voz`:''}. Ahora agrega una foto o video a cada una.`,6500);
   if(opt.voices&&items.length){await sleep(700);$('#ttsAll').click()}
 }
-function openScriptTool(){
+function openScriptTool(presetN){
   let saved={};try{saved=JSON.parse(localStorage.getItem('guionPrompt')||'{}')}catch{}
+  if(presetN)saved.n=presetN;
+  let tpls=tplLoad(),cur=tpls.find(t=>t.id===saved.tpl)||null,editing=null;
   const topic=saved.topic||(pctx&&pctx.titulo)||'';
   openProj('📝 Guion por escenas',`<div class="gpbox">
-   <p class="micro" style="margin:0;font-size:12px">Crea un prompt para ChatGPT, Claude o Gemini. La IA te devuelve el guion con <b>cada frase de cada personaje separada</b>, y aquí lo pegas para que <b>cada frase entre en su propia escena</b>, con la voz de su personaje.</p>
-   <div class="gpstep">1 · Arma el prompt</div>
-   <label>Tema del video<input id="gpTopic" value="${esc(topic)}" placeholder="Ej: La leyenda de la Llorona"></label>
-   <label style="margin-top:6px">Personajes (separados por coma, opcional)<input id="gpChars" value="${esc(saved.chars||'')}" placeholder="Ej: Narrador, La Llorona, Un niño"></label>
-   <div class="row" style="margin-top:6px"><label>Duración (segundos)<input id="gpSecs" type="number" min="10" max="600" value="${saved.secs||60}"></label><label>Escenas (aprox.)<input id="gpN" type="number" min="2" max="40" value="${saved.n||10}"></label></div>
+   <p class="micro" style="margin:0;font-size:12px">Elige una plantilla y cuántas escenas quieres. La app arma el prompt para ChatGPT, Claude o Gemini; la IA devuelve <b>cada frase de cada personaje separada</b> y aquí la pegas para que <b>cada frase entre en su propia escena</b>.</p>
+   <div class="gpstep">1 · Plantilla <span class="micro" id="tpCount"></span></div>
+   <div class="tprow"><input id="tpSearch" placeholder="🔎 Buscar plantilla…"><button class="smallbtn" id="tpNew">➕ Nueva</button></div>
+   <div class="tplist" id="tpList"></div>
+   <div class="tpedit hidden" id="tpEdit">
+     <label>Nombre de la plantilla<input id="teName" placeholder="Ej: 🎭 Traición en la familia"></label>
+     <label>¿Qué debe pasar en la historia?<textarea id="teStory" style="min-height:90px" placeholder="Ej: Dos hermanos discuten por la herencia, uno traiciona al otro, al final se descubre un secreto…"></textarea></label>
+     <label>Personajes<input id="teChars" placeholder="Ej: Narrador, Hermano mayor, Hermano menor, La madre"></label>
+     <label>Estilo<input id="teStyle" placeholder="Ej: dramático, con suspenso"></label>
+     <div class="row"><label>Escenas<input id="teN" type="number" min="2" max="100"></label><label>Segundos<input id="teSecs" type="number" min="10" max="900"></label></div>
+     <div class="row" style="margin-top:6px"><button class="btn primary" id="teSave" style="justify-content:center">💾 Guardar plantilla</button><button class="btn" id="teCancel" style="justify-content:center">Cancelar</button></div>
+   </div>
+   <div class="gpstep">2 · Ajusta el prompt</div>
+   <div class="micro" id="tpCur" style="font-size:12px;margin-bottom:4px"></div>
+   <label>Tema o detalles extra${cur?' (opcional)':''}<input id="gpTopic" value="${esc(topic)}" placeholder="Ej: La leyenda de la Llorona"></label>
+   <label style="margin-top:6px">Personajes (separados por coma)<input id="gpChars" value="${esc(saved.chars||'')}" placeholder="Ej: Narrador, La Llorona, Un niño"></label>
+   <div class="row" style="margin-top:6px"><label>Escenas<input id="gpN" type="number" min="2" max="100" value="${saved.n||10}"></label><label>Duración (segundos)<input id="gpSecs" type="number" min="10" max="900" value="${saved.secs||60}"></label></div>
    <label style="margin-top:6px">Estilo (opcional)<input id="gpStyle" value="${esc(saved.style||'')}" placeholder="Ej: misterioso, con suspenso, para niños…"></label>
    <button class="btn primary" id="gpCopy" style="margin-top:8px;width:100%;justify-content:center">📋 Copiar prompt</button>
    <details style="margin-top:6px"><summary class="micro" style="cursor:pointer">Ver el prompt</summary><textarea id="gpPrompt" readonly style="min-height:160px;margin-top:6px"></textarea></details>
-   <div class="gpstep">2 · Pega lo que te respondió la IA</div>
+   <div class="gpstep">3 · Pega lo que te respondió la IA</div>
    <textarea id="gpIn" placeholder="ESCENA 1&#10;PERSONAJE: Narrador&#10;VOZ: locutor&#10;TEXTO: …&#10;IMAGEN: …&#10;DURACION: 5" style="min-height:130px"></textarea>
    <button class="btn" id="gpPaste" style="margin-top:6px">📋 Pegar del portapapeles</button>
    <div class="okmsg" id="gpMsg"></div>
    <label class="check"><input type="checkbox" id="gpVoices" checked> Crear la voz de cada escena</label>
    <label class="check"><input type="checkbox" id="gpWho"> Poner el nombre del personaje en el texto</label>
    <div class="row" style="margin-top:8px"><button class="btn primary" id="gpAdd" style="justify-content:center">➕ Agregar escenas</button><button class="btn" id="gpReplace" style="justify-content:center">♻️ Reemplazar todo</button></div>
+   <details style="margin-top:10px"><summary class="micro" style="cursor:pointer">💾 Copia de mis plantillas</summary><div class="row" style="margin-top:6px"><button class="btn" id="tpExport" style="justify-content:center">⬇️ Guardar archivo</button><label class="btn" style="justify-content:center">⬆️ Abrir archivo<input type="file" id="tpImport" accept=".json,application/json,text/plain" hidden></label></div></details>
   </div>`);
-  const vals=()=>({topic:$('#gpTopic').value,chars:$('#gpChars').value,secs:Math.max(10,+$('#gpSecs').value||60),n:Math.max(2,Math.min(40,+$('#gpN').value||10)),style:$('#gpStyle').value});
-  const upd=()=>{const v=vals();$('#gpPrompt').value=buildScriptPrompt(v);try{localStorage.setItem('guionPrompt',JSON.stringify(v))}catch{}};
-  ['#gpTopic','#gpChars','#gpSecs','#gpN','#gpStyle'].forEach(k=>$(k).oninput=upd);upd();
-  $('#gpCopy').onclick=()=>{if(!$('#gpTopic').value.trim()){toast('Escribe primero el tema del video.');$('#gpTopic').focus();return}upd();copyText($('#gpPrompt').value);$('#gpMsg').textContent='Prompt copiado. Pégalo en la IA y luego pega aquí su respuesta.'};
+  const vals=()=>({tpl:cur?cur.id:'',topic:$('#gpTopic').value,chars:$('#gpChars').value,secs:Math.max(10,+$('#gpSecs').value||60),n:Math.max(2,Math.min(100,+$('#gpN').value||10)),style:$('#gpStyle').value});
+  const upd=()=>{const v=vals();$('#gpPrompt').value=buildScriptPrompt({...v,story:cur?cur.story:'',tplName:cur?cur.name:''});try{localStorage.setItem('guionPrompt',JSON.stringify(v))}catch{}
+    $('#tpCur').innerHTML=cur?`Plantilla: <b>${esc(cur.name)}</b> <button class="smallbtn" id="tpClear" style="padding:2px 7px">✕ quitar</button>`:'Sin plantilla: escribe el tema.';
+    if($('#tpClear'))$('#tpClear').onclick=()=>{cur=null;drawList();upd()}};
+  const drawList=()=>{const q=$('#tpSearch').value.trim().toLowerCase();const l=tpls.filter(t=>!q||(t.name+' '+t.story+' '+t.chars+' '+t.style).toLowerCase().includes(q));
+    $('#tpCount').textContent=`(${tpls.length})`;
+    $('#tpList').innerHTML=l.length?l.map(t=>`<div class="tpcard${cur&&cur.id===t.id?' on':''}" data-id="${t.id}"><div class="tpmain"><b>${esc(t.name)}</b><span>${esc(t.story)}</span><i>🎭 ${esc(t.chars||'—')} · ${t.n||10} escenas</i></div><div class="tpbtns"><button class="smallbtn tpE" title="Editar">✏️</button><button class="smallbtn tpC" title="Duplicar">⧉</button><button class="smallbtn tpD" title="Borrar">🗑</button></div></div>`).join(''):'<div class="micro" style="padding:10px">No hay plantillas con esa búsqueda.</div>';
+    $('#tpList').querySelectorAll('.tpcard').forEach(c=>{const t=tpls.find(x=>x.id===c.dataset.id);
+      c.querySelector('.tpmain').onclick=()=>{cur=t;$('#gpChars').value=t.chars||'';$('#gpStyle').value=t.style||'';if(t.n)$('#gpN').value=presetN||t.n;if(t.secs)$('#gpSecs').value=t.secs;fixSecs();drawList();upd();toast('Plantilla: '+t.name)};
+      c.querySelector('.tpE').onclick=()=>edit(t);
+      c.querySelector('.tpC').onclick=()=>{const n={...t,id:'t'+Date.now(),name:t.name+' (copia)'};tpls.splice(tpls.indexOf(t)+1,0,n);tplSave(tpls);drawList();edit(n)};
+      c.querySelector('.tpD').onclick=()=>{if(!confirm(`¿Borrar la plantilla "${t.name}"?`))return;tpls=tpls.filter(x=>x!==t);if(cur===t)cur=null;tplSave(tpls);drawList();upd()}})};
+  const edit=t=>{editing=t;const v=vals();$('#tpEdit').classList.remove('hidden');
+    $('#teName').value=t?t.name:'';$('#teStory').value=t?t.story:'';$('#teChars').value=t?t.chars:v.chars;$('#teStyle').value=t?t.style:v.style;$('#teN').value=t?t.n||10:v.n;$('#teSecs').value=t?t.secs||60:v.secs;
+    $('#tpEdit').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>$('#teName').focus(),250)};
+  $('#tpNew').onclick=()=>edit(null);
+  $('#teCancel').onclick=()=>{editing=null;$('#tpEdit').classList.add('hidden')};
+  $('#teSave').onclick=()=>{const name=$('#teName').value.trim(),story=$('#teStory').value.trim();if(!name||!story)return toast('Escribe el nombre y qué debe pasar en la historia.');
+    const d={name,story,chars:$('#teChars').value.trim(),style:$('#teStyle').value.trim(),n:Math.max(2,Math.min(100,+$('#teN').value||10)),secs:Math.max(10,+$('#teSecs').value||60)};
+    if(editing)Object.assign(editing,d);else{editing={id:'t'+Date.now(),...d};tpls.unshift(editing)}
+    tplSave(tpls);cur=editing;$('#gpChars').value=d.chars;$('#gpStyle').value=d.style;$('#gpN').value=presetN||d.n;$('#gpSecs').value=d.secs;fixSecs();editing=null;$('#tpEdit').classList.add('hidden');$('#tpSearch').value='';drawList();upd();toast('💾 Plantilla guardada')};
+  $('#tpSearch').oninput=drawList;
+  $('#tpExport').onclick=()=>{const b=new Blob([JSON.stringify({app:'creador-de-contenido',tipo:'plantillas',plantillas:tpls},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='plantillas-guion.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
+  $('#tpImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());const l=(d.plantillas||d).filter(x=>x&&x.name&&x.story);if(!l.length)throw 0;const have=new Set(tpls.map(t=>t.name+'|'+t.story));let n=0;l.forEach(x=>{if(!have.has(x.name+'|'+x.story)){tpls.push({id:'t'+Date.now()+'_'+n,name:x.name,story:x.story,chars:x.chars||'',style:x.style||'',n:+x.n||10,secs:+x.secs||60});n++}});tplSave(tpls);drawList();toast(`Se agregaron ${n} plantilla${n===1?'':'s'}.`)}catch{toast('Ese archivo no tiene plantillas.')}};
+  const fixSecs=()=>{const n=+$('#gpN').value||10;if((+$('#gpSecs').value||0)<n*4)$('#gpSecs').value=n*5};
+  ['#gpTopic','#gpChars','#gpSecs','#gpStyle'].forEach(k=>$(k).oninput=upd);$('#gpN').oninput=()=>{fixSecs();upd()};$('#gpN').onchange=()=>{fixSecs();upd()};fixSecs();drawList();upd();
+  $('#gpCopy').onclick=()=>{if(!cur&&!$('#gpTopic').value.trim()){toast('Elige una plantilla o escribe el tema del video.');$('#gpTopic').focus();return}upd();copyText($('#gpPrompt').value);$('#gpMsg').textContent='Prompt copiado. Pégalo en la IA y luego pega aquí su respuesta.'};
   const check=()=>{const it=parseScript($('#gpIn').value);$('#gpMsg').textContent=it.length?`Encontré ${it.length} escena${it.length>1?'s':''}${new Set(it.map(x=>x.who).filter(Boolean)).size?' de '+[...new Set(it.map(x=>x.who).filter(Boolean))].join(', '):''}.`:'';return it};
   $('#gpIn').oninput=check;
   $('#gpPaste').onclick=async()=>{try{$('#gpIn').value=await navigator.clipboard.readText();check()}catch{toast('No pude leer el portapapeles; mantén presionado el cuadro → Pegar.')}};
   const go=replace=>{const raw=$('#gpIn').value.trim();if(!raw)return toast('Pega primero el guion que te dio la IA.');
     try{const j=JSON.parse(raw.replace(/^```(json)?|```$/g,''));if(isAiProject(j))return importAiProject(j,{voices:$('#gpVoices').checked})}catch{}
     const it=check();if(!it.length)return toast('No encontré escenas en ese texto.');
-    scriptToScenes(it.slice(0,60),{replace,voices:$('#gpVoices').checked,showWho:$('#gpWho').checked})};
+    scriptToScenes(it.slice(0,100),{replace,voices:$('#gpVoices').checked,showWho:$('#gpWho').checked})};
   $('#gpAdd').onclick=()=>go(false);$('#gpReplace').onclick=()=>go(true);
 }
-$('#hdScript').onclick=openScriptTool;
+$('#hdScript').onclick=()=>openScriptTool();
 
 /* ---------- música incluida (se compone en el teléfono) ---------- */
 const TRACKS={
