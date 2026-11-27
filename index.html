@@ -37,6 +37,8 @@ select{background:#10161e;color:var(--text);border:1px solid var(--line);border-
 .iconbtn.lock.on{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);border-color:transparent}
 .scene.locked{border-color:#ff9a3c88}
 .scene.locked .scene-body>*:not(.lockbar){pointer-events:none;opacity:.6}
+.scinfo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:12px}.scinfo .who{font-weight:700;color:#ffb27a;background:#2a1c14;border-radius:20px;padding:3px 9px}.scinfo .idea{color:var(--muted);flex:1;min-width:120px}.scinfo .smallbtn{padding:4px 8px}
+.gpbox textarea{width:100%;font-size:12px}.gpbox input{width:100%;background:#10161e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 10px}.gpbox .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gpbox label{font-size:12px;color:var(--muted);display:grid;gap:3px}.gpbox label.check{display:flex;align-items:center;gap:8px;margin-top:6px}.gpstep{font-weight:800;font-size:13px;margin:10px 0 4px}
 .lockbar{grid-column:1/-1;font-size:12px;font-weight:600;color:#ffb27a;background:#2a1c14;border:1px solid #ff9a3c55;border-radius:10px;padding:8px 10px}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s}
 .scene.sel{border-color:#b8476a;box-shadow:0 0 0 1px #b8476a inset}
@@ -240,6 +242,7 @@ a.smallbtn{color:inherit;text-decoration:none}
             <button class="pvb" id="hdArchive"><span class="pi">🗄</span><span class="pl">Archivar</span></button>
             <button class="pvb" id="hdNew"><span class="pi">➕</span><span class="pl">Nuevo</span></button>
             <button class="pvb" id="hdImport"><span class="pi">🤖</span><span class="pl">Importar</span></button>
+            <button class="pvb" id="hdScript"><span class="pi">📝</span><span class="pl">Guion IA</span></button>
           </div>
           <div class="preview" id="preview"><canvas id="canvas" width="720" height="1280"></canvas></div>
           <div class="pvside">
@@ -323,7 +326,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 31 · 26 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 32 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -410,7 +413,7 @@ function videoMeta(url){return new Promise(res=>{const v=document.createElement(
 function freeVideo(v){if(!v)return;try{v.pause();v.removeAttribute('src');v.load()}catch{}v.remove()}
 
 /* ---------- escenas ---------- */
-function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,locked:!!d.locked,motion:d.motion&&Array.isArray(d.motion.keys)?{keys:[...d.motion.keys],amt:+d.motion.amt||1}:null,movOpen:false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
+function makeScene(d={}){return{id:++idc,kind:d.kind||'',mediaBlob:d.mediaBlob||null,mediaUrl:d.mediaBlob?URL.createObjectURL(d.mediaBlob):'',mediaName:d.mediaName||'',mediaDur:d.mediaDur||0,text:d.text||'',textPos:d.textPos||'bottom',fit:d.fit||'cover',duration:clampDur(d.duration||5),audioBlob:d.audioBlob||null,audioUrl:d.audioBlob?URL.createObjectURL(d.audioBlob):'',audioName:d.audioName||'',audioDur:d.audioDur||0,videoAudio:d.videoAudio!==false,locked:!!d.locked,who:d.who||'',idea:d.idea||'',motion:d.motion&&Array.isArray(d.motion.keys)?{keys:[...d.motion.keys],amt:+d.motion.amt||1}:null,movOpen:false,layers:(d.layers||[]).filter(l=>l&&l.blob).map(mkLayer),layOpen:false,voiceId:d.voiceId||'',voiceLang:'',voiceText:d.voiceText||'',music:d.music||'',musicVol:d.musicVol==null?null:+d.musicVol,musicBlob:d.musicBlob||null,musicName:d.musicName||'',musOpen:false,clipStart:+d.clipStart||0,clip:!!d.clip,lang:d.lang==='en'?'en':'es',textEs:d.textEs||(d.lang==='en'&&d.textAlt?d.textAlt:''),textFor:d.textFor||d.textAltFor||'',speedFit:d.speedFit!==false,fx:Object.assign({preset:'normal',pitch:0,tone:0,vol:1},d.fx||{}),fxOpen:!!d.fxOpen,recording:false,recorder:null,dictating:null}}
 function add(d){const s=makeScene(d);scenes.push(s);selectedId=s.id;draw();return s}
 async function setMedia(s,file){
   if(!isVideoFile(file))file=await shrinkImage(file);
@@ -435,7 +438,7 @@ async function setAudio(s,blob,name){
 }
 function removeAudio(s){revoke(s.audioUrl);s.audioBlob=null;s.audioUrl='';s.audioName='';s.audioDur=0;draw()}
 function move(i,d){const n=i+d;if(n<0||n>=scenes.length)return;[scenes[i],scenes[n]]=[scenes[n],scenes[i]];draw()}
-function duplicate(i){const s=scenes[i],c=makeScene({layers:s.layers.map(l=>({...l})),kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,layers:s.layers.map(l=>({...l})),motion:s.motion?{keys:[...s.motion.keys],amt:s.motion.amt}:null,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
+function duplicate(i){const s=scenes[i],c=makeScene({who:s.who,idea:s.idea,layers:s.layers.map(l=>({...l})),kind:s.kind,mediaBlob:s.mediaBlob,mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,audioBlob:s.audioBlob,audioName:s.audioName,audioDur:s.audioDur,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,layers:s.layers.map(l=>({...l})),motion:s.motion?{keys:[...s.motion.keys],amt:s.motion.amt}:null,music:s.music,musicVol:s.musicVol,musicBlob:s.musicBlob,musicName:s.musicName,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:{...s.fx}});scenes.splice(i+1,0,c);selectedId=c.id;draw()}
 function miniHead(s){const th=s.kind==='image'?`<img src="${s.mediaUrl}" alt="">`:s.kind==='video'?`<video src="${s.mediaUrl}#t=${((s.clipStart||0)+0.1).toFixed(2)}" muted playsinline preload="metadata"></video>`:'＋';
   const ic=[fmtS(s.duration)];if(s.audioBlob)ic.push(s.audioName==='Voz del texto'?'🔊 voz':'🎙 voz');if(s.lang==='en')ic.push('🇺🇸');if(s.music&&s.music!=='')ic.push(s.music==='none'?'🔇':'🎵');if(s.motion)ic.push('🎥');if(s.layers&&s.layers.length)ic.push('🧩'+s.layers.length);
   return`<div class="mini"><span class="mth">${th}</span><span class="mtx"><span class="snip">${esc((s.text||'').trim()||(s.kind?'(sin texto)':'Escena vacía: toca para agregar foto o video'))}</span><span class="mic">${ic.join(' · ')}</span></span><span class="open">Editar ▾</span></div>`}
@@ -478,6 +481,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn lock${s.locked?' o
  <div class="fields">
   <div><div class="labelrow">TEXTO EN PANTALLA <span>Escena ${i+1}</span></div>
    <textarea placeholder="Escribe aquí lo que quieres contar en esta escena...">${esc(s.text)}</textarea>
+   ${s.who||s.idea?`<div class="scinfo">${s.who?`<span class="who">🎭 ${esc(s.who)}</span>`:''}${s.idea?`<span class="idea">🖼 ${esc(s.idea)}</span><button class="smallbtn ideaCopy" title="Copiar la idea de imagen">⧉</button><button class="smallbtn ideaFind" title="Buscar imágenes con esta idea">🔎</button>`:''}</div>`:''}
    <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<button class="smallbtn lang" title="Traducir el texto">${s.lang==='en'?'🇲🇽 Regresar a español':'🇺🇸 Pasar a inglés'}</button><select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
   </div>
   <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
@@ -523,6 +527,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn lock${s.locked?' o
     if(q('.talkEn'))q('.talkEn').onclick=()=>talkToEnglish(s);
     if(q('.rmA'))q('.rmA').onclick=()=>removeAudio(s);
     if(q('.dictate'))q('.dictate').onclick=()=>toggleDictation(s);
+    if(q('.ideaCopy')){q('.ideaCopy').onclick=()=>copyText(s.idea);q('.ideaFind').onclick=()=>openImagesQ(s.idea)}
     q('.lock').onclick=e=>{e.stopPropagation();s.locked=!s.locked;draw();toast(s.locked?`🔒 Escena ${i+1} con candado: ya no se puede cambiar`:`🔓 Escena ${i+1} desbloqueada`)};
     if(s.locked){el.querySelectorAll('.scene-body input,.scene-body select,.scene-body textarea,.scene-body button,.scene-head .delete').forEach(x=>{x.disabled=true});
       const body=q('.scene-body');if(body)body.insertAdjacentHTML('afterbegin',`<div class="lockbar">🔒 Esta escena tiene candado. Toca el candado de arriba para cambiarla.</div>`)}
@@ -1238,7 +1243,7 @@ function bid(b){if(!b)return'';let k=blobIds.get(b);if(!k){k='b'+(nextBid++);blo
 function idb(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('creador-contenido',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
 async function tx(mode,fn){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv',mode),st=t.objectStore('kv'),out=fn(st);t.oncomplete=()=>res(out&&out.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}
 function projectMeta(){return{v:1,settings:{format:settings.format,textSize:settings.textSize,transition:settings.transition,motion:settings.motion,musicVol:settings.musicVol,musicName:settings.musicName,musicPreset:settings.musicPreset,ttsVoice:settings.ttsVoice,ttsVoiceEn:settings.ttsVoiceEn,music:bid(settings.musicBlob)},
-  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,motion:s.motion,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),locked:!!s.locked,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
+  scenes:scenes.map(s=>({kind:s.kind,media:bid(s.mediaBlob),mediaName:s.mediaName,mediaDur:s.mediaDur,text:s.text,textPos:s.textPos,fit:s.fit,duration:s.duration,videoAudio:s.videoAudio,speedFit:s.speedFit,voiceId:s.voiceId,voiceLang:s.voiceLang,voiceText:s.voiceText,music:s.music,musicVol:s.musicVol,musicFile:bid(s.musicBlob),musicName:s.musicName,motion:s.motion,layers:(s.layers||[]).map(l=>({file:bid(l.blob),name:l.name,x:l.x,y:l.y,size:l.size,rot:l.rot,op:l.op,anim:l.anim,key:l.key})),locked:!!s.locked,who:s.who,idea:s.idea,clipStart:s.clipStart,clip:s.clip,lang:s.lang,textEs:s.textEs,textFor:s.textFor,fx:s.fx,audio:bid(s.audioBlob),audioName:s.audioName,audioDur:s.audioDur}))}}
 let saving=false;
 async function autosave(){
   if(saving||restoring||!window.indexedDB)return;const meta=projectMeta(),sig=JSON.stringify(meta);if(sig===lastSig)return;
@@ -1461,6 +1466,120 @@ function openImport(){
   $('#impGo').onclick=()=>run($('#impText').value);
   $('#impPaste').onclick=async()=>{try{$('#impText').value=await navigator.clipboard.readText()}catch{toast('No pude leer el portapapeles; pega con el dedo (mantén presionado → Pegar).')}};
 }
+
+/* ---------- guion por escenas (prompt para IA) ---------- */
+const VOZ_ALIAS={normal:'normal',locutor:'locutor',narrador:'locutor',suave:'suave',grave:'grave',nino:'nino','niño':'nino',nina:'nino','niña':'nino',infantil:'nino',ardilla:'ardilla',aguda:'ardilla',monstruo:'monstruo',robot:'robot',misterio:'misterio',misteriosa:'misterio',eco:'eco',radio:'radio',telefono:'telefono','teléfono':'telefono',estadio:'estadio'};
+const VOZ_ROT=['locutor','grave','suave','nino','misterio','ardilla','monstruo','robot'];
+function copyText(t){const done=()=>toast('Copiado ✓');if(navigator.clipboard&&isSecureContext)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t));else fallbackCopy(t);function fallbackCopy(x){const ta=document.createElement('textarea');ta.value=x;document.body.append(ta);ta.select();try{document.execCommand('copy');done()}catch{toast('No pude copiar; mantén presionado el texto y copia.')}ta.remove()}}
+function buildScriptPrompt(o){
+  const chars=o.chars.trim()?`Personajes: ${o.chars.trim()}.${/narrador/i.test(o.chars)?'':' Puede haber también un Narrador.'}`:'Personajes: un Narrador (agrega otros personajes solo si ayudan a la historia).';
+  return `Eres guionista de videos cortos para redes sociales (TikTok, Reels, Shorts). Escribe un guion sobre: ${o.topic.trim()||'[ESCRIBE AQUÍ EL TEMA]'}.
+${chars}
+Duración total aproximada: ${o.secs} segundos, en unas ${o.n} escenas.${o.style.trim()?`\nEstilo: ${o.style.trim()}.`:''}
+
+REGLAS MUY IMPORTANTES:
+1. Cada escena es UNA sola frase corta (máximo 20 palabras) dicha por UN solo personaje.
+2. Si un personaje dice varias frases seguidas, ponlas en escenas separadas.
+3. Nunca juntes lo que dicen dos personajes en la misma escena.
+4. Usa siempre la misma VOZ para el mismo personaje y voces distintas para personajes distintos.
+5. Responde SOLO con las escenas, sin títulos, sin introducción y sin comentarios al final.
+6. Usa exactamente este formato para cada escena:
+
+ESCENA 1
+PERSONAJE: Narrador
+VOZ: locutor
+TEXTO: la frase exacta que se dice y que aparece en pantalla
+IMAGEN: descripción breve de la imagen o video que debe verse en esta escena
+DURACION: 5
+
+ESCENA 2
+PERSONAJE: ...
+VOZ: ...
+TEXTO: ...
+IMAGEN: ...
+DURACION: ...
+
+Valores permitidos para VOZ: locutor, normal, suave, grave, niño, ardilla, monstruo, robot, misterio, eco, radio, telefono, estadio.
+DURACION es en segundos (entre 3 y 10), lo que tarda en decirse la frase con calma.`;
+}
+function parseScript(raw){
+  let t=String(raw||'').replace(/\r/g,'').replace(/```[a-z]*\n?|```/gi,'').replace(/\*\*/g,'').trim();if(!t)return[];
+  const field=/^\s*[-•]?\s*(PERSONAJE|PERSONA|QUIEN|QUIÉN|VOZ|TEXTO|DIALOGO|DIÁLOGO|FRASE|IMAGEN|IMAGENES|IMÁGENES|VISUAL|VIDEO|DURACION|DURACIÓN|TIEMPO|ACENTO)\s*[:：]\s*(.*)$/i;
+  const out=[];
+  const blocks=t.split(/^\s*#*\s*(?:ESCENA|SCENE)\s*\d*\s*[:.\-–]?\s*$/im).map(x=>x.trim()).filter(Boolean);
+  const looksBlocks=/^\s*#*\s*(?:ESCENA|SCENE)\s*\d*\s*[:.\-–]?\s*$/im.test(t)||/^\s*TEXTO\s*:/im.test(t);
+  if(looksBlocks){
+    for(const b of blocks){const o={};let last=null;
+      for(const line of b.split('\n')){const m=line.match(field);
+        if(m){const k=m[1].toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');last=({PERSONA:'PERSONAJE',QUIEN:'PERSONAJE',DIALOGO:'TEXTO',FRASE:'TEXTO',IMAGENES:'IMAGEN',VISUAL:'IMAGEN',VIDEO:'IMAGEN',TIEMPO:'DURACION'})[k]||k;o[last]=(o[last]?o[last]+' ':'')+m[2].trim()}
+        else if(last&&line.trim())o[last]+=' '+line.trim()}
+      if(o.TEXTO&&o.TEXTO.trim())out.push({who:(o.PERSONAJE||'').trim(),voz:(o.VOZ||'').trim(),text:o.TEXTO.trim().replace(/^["“«]|["”»]$/g,''),idea:(o.IMAGEN||'').trim(),dur:parseFloat(String(o.DURACION||'').replace(',','.')),acc:(o.ACENTO||'').trim()})}
+    return out;
+  }
+  // formato "Nombre: frase" (una por renglón)
+  const lines=t.split('\n').map(x=>x.trim()).filter(Boolean);const dlg=lines.map(l=>l.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñü0-9 .'()\-]{1,30})\s*[:：]\s*(.+)$/));
+  if(dlg.filter(Boolean).length>=Math.max(2,lines.length*0.6)){lines.forEach((l,i)=>{const m=dlg[i];if(m)out.push({who:m[1].trim(),text:m[2].trim()});else if(out.length)out[out.length-1].text+=' '+l});return out}
+  return splitScript(t).map(x=>({text:x}));
+}
+function estDur(text){const w=text.split(/\s+/).filter(Boolean).length;return Math.max(3,Math.min(20,Math.round((w/2.5+1)*2)/2))}
+function vozKey(v){const k=String(v||'').toLowerCase().trim().split(/[\s,(]/)[0];return VOZ_ALIAS[k]||VOZ_ALIAS[k.normalize('NFD').replace(/[\u0300-\u036f]/g,'')]||''}
+async function scriptToScenes(items,opt){
+  if(opt.replace&&scenes.some(x=>x.kind||x.text||x.audioBlob)&&!confirm('¿Borrar las escenas actuales y poner solo las del guion?\n\nConsejo: si quieres conservarlas, primero toca 🗄 Archivar.'))return;
+  if(opt.replace){scenes.forEach(x=>{revoke(x.mediaUrl);revoke(x.audioUrl)});scenes=[]}
+  const byWho=new Map();let rot=0;
+  const vozFor=it=>{const name=(it.who||'').toLowerCase();let k=vozKey(it.voz);
+    if(name&&byWho.has(name))return byWho.get(name);
+    if(!k){if(!name)return'';k=/narrador|narradora/.test(name)?'locutor':VOZ_ROT[rot++%VOZ_ROT.length]}
+    if(name)byWho.set(name,k);return k};
+  const empties=scenes.filter(x=>!x.kind&&!x.text&&!x.audioUrl&&!x.locked);let first=null;
+  for(const it of items){
+    const text=opt.showWho&&it.who?`${it.who}: ${it.text}`:it.text;
+    const d={text,who:it.who||'',idea:it.idea||'',duration:isFinite(it.dur)&&it.dur>0?it.dur:estDur(it.text)};
+    const acc=(it.acc||'').toLowerCase();if(/espa/.test(acc))d.voiceId='es_ES-davefx-medium';else if(/m[eé]x/.test(acc))d.voiceId='es_MX-ald-medium';
+    const fx=vozFor(it);if(fx&&fx!=='normal'){const pr=(PRESETS.find(p=>p[0]===fx)||[])[2];if(pr)d.fx={preset:fx,...pr,vol:1}}
+    let s=empties.shift();
+    if(s){const n=makeScene(d);n.id=s.id;scenes[scenes.indexOf(s)]=n;s=n}else{s=makeScene(d);scenes.push(s)}
+    if(!first)first=s;
+  }
+  closeProj();selectedId=scenes[scenes.length-1].id;draw();renderIdleSoon();window.scrollTo({top:0,behavior:'smooth'});
+  const nChars=new Set(items.map(x=>x.who).filter(Boolean)).size;
+  toast(`✓ ${items.length} escena${items.length>1?'s':''} creada${items.length>1?'s':''}${nChars?` · ${nChars} personaje${nChars>1?'s':''} con su propia voz`:''}. Ahora agrega una foto o video a cada una.`,6500);
+  if(opt.voices&&items.length){await sleep(700);$('#ttsAll').click()}
+}
+function openScriptTool(){
+  let saved={};try{saved=JSON.parse(localStorage.getItem('guionPrompt')||'{}')}catch{}
+  const topic=saved.topic||(pctx&&pctx.titulo)||'';
+  openProj('📝 Guion por escenas',`<div class="gpbox">
+   <p class="micro" style="margin:0;font-size:12px">Crea un prompt para ChatGPT, Claude o Gemini. La IA te devuelve el guion con <b>cada frase de cada personaje separada</b>, y aquí lo pegas para que <b>cada frase entre en su propia escena</b>, con la voz de su personaje.</p>
+   <div class="gpstep">1 · Arma el prompt</div>
+   <label>Tema del video<input id="gpTopic" value="${esc(topic)}" placeholder="Ej: La leyenda de la Llorona"></label>
+   <label style="margin-top:6px">Personajes (separados por coma, opcional)<input id="gpChars" value="${esc(saved.chars||'')}" placeholder="Ej: Narrador, La Llorona, Un niño"></label>
+   <div class="row" style="margin-top:6px"><label>Duración (segundos)<input id="gpSecs" type="number" min="10" max="600" value="${saved.secs||60}"></label><label>Escenas (aprox.)<input id="gpN" type="number" min="2" max="40" value="${saved.n||10}"></label></div>
+   <label style="margin-top:6px">Estilo (opcional)<input id="gpStyle" value="${esc(saved.style||'')}" placeholder="Ej: misterioso, con suspenso, para niños…"></label>
+   <button class="btn primary" id="gpCopy" style="margin-top:8px;width:100%;justify-content:center">📋 Copiar prompt</button>
+   <details style="margin-top:6px"><summary class="micro" style="cursor:pointer">Ver el prompt</summary><textarea id="gpPrompt" readonly style="min-height:160px;margin-top:6px"></textarea></details>
+   <div class="gpstep">2 · Pega lo que te respondió la IA</div>
+   <textarea id="gpIn" placeholder="ESCENA 1&#10;PERSONAJE: Narrador&#10;VOZ: locutor&#10;TEXTO: …&#10;IMAGEN: …&#10;DURACION: 5" style="min-height:130px"></textarea>
+   <button class="btn" id="gpPaste" style="margin-top:6px">📋 Pegar del portapapeles</button>
+   <div class="okmsg" id="gpMsg"></div>
+   <label class="check"><input type="checkbox" id="gpVoices" checked> Crear la voz de cada escena</label>
+   <label class="check"><input type="checkbox" id="gpWho"> Poner el nombre del personaje en el texto</label>
+   <div class="row" style="margin-top:8px"><button class="btn primary" id="gpAdd" style="justify-content:center">➕ Agregar escenas</button><button class="btn" id="gpReplace" style="justify-content:center">♻️ Reemplazar todo</button></div>
+  </div>`);
+  const vals=()=>({topic:$('#gpTopic').value,chars:$('#gpChars').value,secs:Math.max(10,+$('#gpSecs').value||60),n:Math.max(2,Math.min(40,+$('#gpN').value||10)),style:$('#gpStyle').value});
+  const upd=()=>{const v=vals();$('#gpPrompt').value=buildScriptPrompt(v);try{localStorage.setItem('guionPrompt',JSON.stringify(v))}catch{}};
+  ['#gpTopic','#gpChars','#gpSecs','#gpN','#gpStyle'].forEach(k=>$(k).oninput=upd);upd();
+  $('#gpCopy').onclick=()=>{if(!$('#gpTopic').value.trim()){toast('Escribe primero el tema del video.');$('#gpTopic').focus();return}upd();copyText($('#gpPrompt').value);$('#gpMsg').textContent='Prompt copiado. Pégalo en la IA y luego pega aquí su respuesta.'};
+  const check=()=>{const it=parseScript($('#gpIn').value);$('#gpMsg').textContent=it.length?`Encontré ${it.length} escena${it.length>1?'s':''}${new Set(it.map(x=>x.who).filter(Boolean)).size?' de '+[...new Set(it.map(x=>x.who).filter(Boolean))].join(', '):''}.`:'';return it};
+  $('#gpIn').oninput=check;
+  $('#gpPaste').onclick=async()=>{try{$('#gpIn').value=await navigator.clipboard.readText();check()}catch{toast('No pude leer el portapapeles; mantén presionado el cuadro → Pegar.')}};
+  const go=replace=>{const raw=$('#gpIn').value.trim();if(!raw)return toast('Pega primero el guion que te dio la IA.');
+    try{const j=JSON.parse(raw.replace(/^```(json)?|```$/g,''));if(isAiProject(j))return importAiProject(j,{voices:$('#gpVoices').checked})}catch{}
+    const it=check();if(!it.length)return toast('No encontré escenas en ese texto.');
+    scriptToScenes(it.slice(0,60),{replace,voices:$('#gpVoices').checked,showWho:$('#gpWho').checked})};
+  $('#gpAdd').onclick=()=>go(false);$('#gpReplace').onclick=()=>go(true);
+}
+$('#hdScript').onclick=openScriptTool;
 
 /* ---------- música incluida (se compone en el teléfono) ---------- */
 const TRACKS={
@@ -1838,7 +1957,8 @@ function openCutter(file,targetId){
 }
 function closeCutter(){cut.token++;cv.pause();$('#cutter').classList.add('hidden');document.body.style.overflow='';cut.pieces.forEach(p=>revoke(p.thumb));cut.pieces=[];if(cut.av)freeVideo(cut.av);cut.av=null;revoke(cut.url);cut.url='';cv.removeAttribute('src');cv.load();$('#cutGrid').innerHTML=''}
 $('#openCutter').onclick=()=>openCutter(null);
-$('#openImages').onclick=e=>{e.preventDefault();const u=new URLSearchParams({desde:'creador'});const t=(pctx&&pctx.titulo)||'';if(t)u.set('q',t);if(pctx){if(pctx.canal)u.set('canal',pctx.canal);if(pctx.fecha||pctx.titulo)u.set('tema',[pctx.fecha,pctx.titulo].filter(Boolean).join(' — '))}const url=(inPortal&&!onGithub?'../biblioteca/':PORTAL_URL+'biblioteca/')+'?'+u;if(inPortal&&!onGithub){autosave();location.href=url}else window.open(url,'_blank','noopener')};
+$('#openImages').onclick=e=>{e.preventDefault();openImagesQ((pctx&&pctx.titulo)||'')};
+function openImagesQ(t){const u=new URLSearchParams({desde:'creador'});if(t)u.set('q',t);if(pctx){if(pctx.canal)u.set('canal',pctx.canal);if(pctx.fecha||pctx.titulo)u.set('tema',[pctx.fecha,pctx.titulo].filter(Boolean).join(' — '))}const url=(inPortal&&!onGithub?'../biblioteca/':PORTAL_URL+'biblioteca/')+'?'+u;if(inPortal&&!onGithub){autosave();location.href=url}else window.open(url,'_blank','noopener')}
 $('#cutClose').onclick=closeCutter;
 $('#cutFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)loadCut(f)};
 async function loadCut(file){
