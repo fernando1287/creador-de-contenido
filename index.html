@@ -330,7 +330,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 35 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 36 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -860,11 +860,12 @@ const presetName=k=>(PRESETS.find(p=>p[0]===k)||PRESETS[0])[1];
 const sign=v=>(v>0?'+':'')+v;
 const ACCENTS=[['es_MX-ald-medium','🇲🇽 Español de México'],['es_ES-davefx-medium','🇪🇸 Español de España']];
 function curAccent(s){return(s.voiceId&&s.voiceId.startsWith('es_'))?s.voiceId:settings.ttsVoice}
-function fxPanel(s){const f=s.fx,showAcc=s.audioName==='Voz del texto'&&s.lang==='es',ca=curAccent(s);return`<details class="fx" ${s.fxOpen?'open':''}><summary>🎚 Efectos de voz <span class="fx-sum">${showAcc?(ca.startsWith('es_ES')?'🇪🇸 ':'🇲🇽 '):''}${esc(presetName(f.preset))}${f.pitch?` · tono ${sign(f.pitch)}`:''}</span></summary><div class="fx-body">
+function fxPanel(s){const f=s.fx,showAcc=s.audioName==='Voz del texto'&&s.lang==='es',ca=curAccent(s);return`<details class="fx" ${s.fxOpen?'open':''}><summary>🎚 Efectos de voz <span class="fx-sum">${showAcc?(ca.startsWith('es_ES')?'🇪🇸 ':'🇲🇽 '):''}${esc(presetName(f.preset))}${f.pitch?` · tono ${sign(f.pitch)}`:''}${f.speed&&f.speed!==1?` · ${spLabel(f.speed)}`:''}</span></summary><div class="fx-body">
 ${showAcc?`<div class="sl-top">Acento de la voz</div><div class="chips">${ACCENTS.map(([id,n])=>`<button class="chip ${(ca.startsWith(id.slice(0,5)))?'act':''}" data-acc="${id}">${n}</button>`).join('')}</div>`:''}
 <div class="chips">${PRESETS.map(p=>`<button class="chip ${f.preset===p[0]?'act':''}" data-p="${p[0]}">${p[1]}</button>`).join('')}</div>
 <div class="sl"><div class="sl-top">Tono de voz <b class="v-pitch">${sign(f.pitch)}</b></div><input type="range" class="fx-pitch" min="-12" max="12" step="1" value="${f.pitch}"><div class="sl-ends"><span>◀ Más grave</span><span>Más aguda ▶</span></div></div>
 <div class="sl"><div class="sl-top">Timbre <b class="v-tone">${sign(f.tone)}</b></div><input type="range" class="fx-tone" min="-10" max="10" step="1" value="${f.tone}"><div class="sl-ends"><span>◀ Más suave</span><span>Más brillante ▶</span></div></div>
+<div class="sl"><div class="sl-top">⏩ Velocidad de la voz <b class="v-speed">${spLabel(f.speed)}</b></div><div class="chips spchips">${SPEEDS.map(([v,n])=>`<button class="chip ${(+f.speed||1)===v?'act':''}" data-sp="${v}">${n}</button>`).join('')}</div><input type="range" class="fx-speed" min="0.85" max="1.2" step="0.01" value="${+f.speed||1}"><div class="sl-ends"><span>◀ Más lenta</span><span>Más rápida ▶</span></div></div>
 <div class="sl"><div class="sl-top">Volumen <b class="v-vol">${Math.round(f.vol*100)}%</b></div><input type="range" class="fx-vol" min="0.2" max="2" step="0.05" value="${f.vol}"><div class="sl-ends"><span>Bajo</span><span>Alto</span></div></div>
 <div class="fx-actions"><button class="smallbtn playV">▶ Escuchar</button><button class="smallbtn fx-reset">↺ Voz original</button><span class="micro">Mueve un control y suelta para escucharlo.</span></div>
 </div></details>`}
@@ -874,11 +875,15 @@ function wireFx(s,el){
   const sync=()=>{q('.v-pitch').textContent=sign(f.pitch);q('.v-tone').textContent=sign(f.tone);q('.v-vol').textContent=Math.round(f.vol*100)+'%';
     q('.fx-pitch').value=f.pitch;q('.fx-tone').value=f.tone;q('.fx-vol').value=f.vol;
     el.querySelectorAll('.chip[data-p]').forEach(c=>c.classList.toggle('act',c.dataset.p===f.preset));
-    q('.fx-sum').textContent=presetName(f.preset)+(f.pitch?` · tono ${sign(f.pitch)}`:'')};
+    q('.v-speed').textContent=spLabel(f.speed);q('.fx-speed').value=+f.speed||1;el.querySelectorAll('.chip[data-sp]').forEach(c=>c.classList.toggle('act',+c.dataset.sp===(+f.speed||1)));
+    q('.fx-sum').textContent=presetName(f.preset)+(f.pitch?` · tono ${sign(f.pitch)}`:'')+(f.speed&&f.speed!==1?` · ${spLabel(f.speed)}`:'')};
   el.querySelectorAll('.chip[data-acc]').forEach(c=>c.onclick=async()=>{if(ttsBusy)return toast('Espera, ya estoy creando una voz.');if(curAccent(s)===c.dataset.acc){playVoice(s,el);return}s.voiceId=c.dataset.acc;s.fxOpen=true;stopVoice();await textToVoice(s,true);const ne=root.querySelector(`[data-id="${s.id}"]`);if(ne)playVoice(s,ne)});
   el.querySelectorAll('.chip[data-p]').forEach(c=>c.onclick=()=>{const p=PRESETS.find(x=>x[0]===c.dataset.p);f.preset=p[0];f.pitch=p[2].pitch;f.tone=p[2].tone;sync();playVoice(s,el)});
   [['.fx-pitch','pitch'],['.fx-tone','tone'],['.fx-vol','vol']].forEach(([c,k])=>{const i=q(c);i.oninput=()=>{f[k]=+i.value;sync()};i.onchange=()=>{f[k]=+i.value;sync();playVoice(s,el)}});
-  q('.fx-reset').onclick=()=>{Object.assign(f,{preset:'normal',pitch:0,tone:0,vol:1});sync();playVoice(s,el)};
+  const spGo=v=>{f.speed=Math.round(v*100)/100;sync();s._fitVoice=true;playVoice(s,el)};
+  el.querySelectorAll('.chip[data-sp]').forEach(c=>c.onclick=()=>spGo(+c.dataset.sp));
+  {const i=q('.fx-speed');i.oninput=()=>{f.speed=+i.value;sync()};i.onchange=()=>spGo(+i.value)}
+  q('.fx-reset').onclick=()=>{Object.assign(f,{preset:'normal',pitch:0,tone:0,vol:1,speed:1});sync();s._fitVoice=true;playVoice(s,el)};
   q('.playV').onclick=()=>{if(voice.s===s){stopVoice();return}playVoice(s,el)};
 }
 const voice={s:null,src:null,btn:null,token:0};
@@ -891,10 +896,13 @@ async function playVoice(s,el){
     const buf=await getVoiceBuffer(s);if(tok!==voice.token)return;
     const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);src.onended=()=>{if(voice.src===src)stopVoice()};src.start();
     voice.src=src;btn.textContent='■ Detener';
-    if(buf.duration>s.duration+0.05){s.duration=clampDur(Math.ceil(buf.duration*10)/10);const dn=el.querySelector('.dur-number'),rg=el.querySelector('.range'),lb=el.querySelector('.dur-label');if(dn){dn.value=s.duration;rg.value=Math.min(s.duration,60);lb.textContent=fmtS(s.duration)}updateTotals()}
+    const fitDown=s._fitVoice&&s.kind!=='video'&&buf.duration+0.3<s.duration-0.05;s._fitVoice=false;
+    if(buf.duration>s.duration+0.05||fitDown){s.duration=clampDur(Math.ceil((buf.duration+(fitDown?0.3:0))*10)/10);const dn=el.querySelector('.dur-number'),rg=el.querySelector('.range'),lb=el.querySelector('.dur-label');if(dn){dn.value=s.duration;rg.value=Math.min(s.duration,60);lb.textContent=fmtS(s.duration)}updateTotals()}
   }catch(e){console.error(e);if(tok===voice.token){stopVoice();toast('No se pudo procesar la voz.')}}
 }
-const isPlainFx=f=>f.preset==='normal'&&!f.pitch&&!f.tone&&f.vol===1;
+const isPlainFx=f=>f.preset==='normal'&&!f.pitch&&!f.tone&&f.vol===1&&(!f.speed||f.speed===1);
+const SPEEDS=[[0.85,'🐢 Más lenta'],[0.93,'Un poco lenta'],[1,'Normal'],[1.08,'Un poco rápida'],[1.18,'🐇 Más rápida']];
+const spLabel=v=>{v=+v||1;if(v===1)return'Normal';const p=Math.round((v-1)*100);return(p>0?'+':'')+p+'% '+(p>0?'más rápida':'más lenta')};
 async function getVoiceBuffer(s){
   if(!s.audioBlob)return null;
   const key=s.audioUrl+'|'+JSON.stringify(s.fx);if(s._vb&&s._vk===key)return s._vb;
@@ -919,9 +927,10 @@ function pitchShift(x,st){if(!st)return x;const r=Math.pow(2,st/12),y=stretch(x,
 function distCurve(k){const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+k)*x/(1+k*Math.abs(x))}return c}
 function impulse(oc,sec,decay){const sr=oc.sampleRate,len=Math.floor(sr*sec),b=oc.createBuffer(2,len,sr);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay)}return b}
 async function renderFx(raw,f){
-  const sr=raw.sampleRate,len=raw.length;let mono=new Float32Array(len);
+  const sr=raw.sampleRate;let len=raw.length;let mono=new Float32Array(len);
   for(let c=0;c<raw.numberOfChannels;c++){const d=raw.getChannelData(c);for(let i=0;i<len;i++)mono[i]+=d[i]/raw.numberOfChannels}
   await sleep(0);mono=pitchShift(mono,f.pitch);
+  const sp=Math.min(1.2,Math.max(0.85,+f.speed||1));if(Math.abs(sp-1)>0.01){await sleep(0);mono=Float32Array.from(stretch(mono,1/sp));len=mono.length}
   const tail={eco:2.2,estadio:2.8,misterio:2.4}[f.preset]||0.1;
   const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,oc=new OAC(1,len+Math.floor(sr*tail),sr);
   const b=oc.createBuffer(1,len,sr);b.getChannelData(0).set(mono);
