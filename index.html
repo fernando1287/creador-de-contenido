@@ -42,6 +42,7 @@ select{background:#10161e;color:var(--text);border:1px solid var(--line);border-
 .numgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:10px}.nbtn{padding:11px 0;border-radius:11px;background:#202a36;border:1px solid var(--line);font-weight:800;font-size:15px}.nbtn:active,.nbtn:hover{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);border-color:transparent}
 .tprow{display:flex;gap:6px}.tprow input{flex:1}.tplist{max-height:250px;overflow:auto;display:grid;gap:6px;margin-top:6px;padding-right:2px}.tpcard{display:flex;gap:6px;align-items:flex-start;background:#10161e;border:1px solid var(--line);border-radius:11px;padding:8px}.tpcard.on{border-color:#ff9a3c;background:#2a1c14}.tpmain{flex:1;display:grid;gap:2px;cursor:pointer;min-width:0}.tpmain b{font-size:13px}.tpmain span{font-size:11px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tpmain i{font-size:11px;color:#ffb27a;font-style:normal}.tpbtns{display:grid;gap:4px}.tpbtns .smallbtn{padding:4px 7px}.tpedit{background:#151c25;border:1px solid #ff9a3c66;border-radius:12px;padding:10px;margin-top:8px;display:grid;gap:6px}
 .nmode button{flex:1;padding:9px 4px;border-radius:8px;background:none;font-weight:700;font-size:13px;color:var(--muted)}.nmode button.on{background:linear-gradient(135deg,#ff5fa2,#ff9a3c);color:#fff}
+#studioOv{position:fixed;inset:0;z-index:9999;background:#0b0f14;display:flex;flex-direction:column}#studioOv iframe{flex:1;width:100%;border:0;background:#0b0f14}.stbar{display:flex;align-items:center;gap:10px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:#151c25;border-bottom:1px solid var(--line)}.stbar .btn{padding:8px 12px;white-space:nowrap;flex:none}.st-t{flex:1}.st-t{display:grid;font-size:12px;line-height:1.3;min-width:0}.st-t b{font-size:13px}.st-h{color:var(--muted)}.st-load{position:absolute;inset:60px 0 0;display:grid;place-items:center;color:var(--muted);pointer-events:none}body.st-open{overflow:hidden}
 .lockbar{grid-column:1/-1;font-size:12px;font-weight:600;color:#ffb27a;background:#2a1c14;border:1px solid #ff9a3c55;border-radius:10px;padding:8px 10px}
 .scene{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;transition:border-color .2s}
 .scene.sel{border-color:#b8476a;box-shadow:0 0 0 1px #b8476a inset}
@@ -288,7 +289,7 @@ a.smallbtn{color:inherit;text-decoration:none}
             <div class="chips" id="musicChips"></div>
             <div class="narration">
               <button class="smallbtn" id="musicPlay">▶ Escuchar</button>
-              <label class="smallbtn">♫ Usar mi música<input id="musicFile" type="file" accept="audio/*" hidden></label>
+              <button class="smallbtn" id="musicStudio">🎹 Crear en Estudio Beat</button><label class="smallbtn">♫ Usar mi música<input id="musicFile" type="file" accept="audio/*" hidden></label>
               <span class="audio-name" id="musicName"></span>
             </div>
             <span class="micro">Suena despacito debajo del video y baja sola cuando hay voz. En cada escena puedes poner otra música o cambiarle el volumen.</span>
@@ -329,7 +330,7 @@ a.smallbtn{color:inherit;text-decoration:none}
         <p class="hint" style="margin:0 0 10px">Tu proyecto se guarda solo en este teléfono, con todas las fotos, videos y voces. Al volver a abrir la app sigue aquí.</p>
         <div class="fx-actions"><button class="smallbtn" id="newProject">🗑 Empezar nuevo</button><button class="smallbtn" id="saveProject">💾 Copia de seguridad</button><button class="smallbtn" id="loadProject">📂 Abrir copia</button><button class="smallbtn" id="importProject">🤖 Importar proyecto</button><input id="projectFile" type="file" accept="application/json,.json" hidden></div>
         <div class="fx-actions" style="margin-top:10px;align-items:center"><span class="micro" id="storageInfo"></span><button class="smallbtn hidden" id="optAll">⚡ Optimizar videos pesados</button></div>
-        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 34 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
+        <div class="fx-actions" style="margin-top:12px;align-items:center"><span class="micro">Versión 35 · 27 nov 2026</span><button class="smallbtn" id="updBtn">🔄 Buscar actualización</button></div>
         <p class="hint">La copia de seguridad <b>no es un video</b>: es un archivo para pasar tu proyecto a otro teléfono. Ábrelo solo con el botón “Abrir copia”. Para el video usa “Unir y exportar video”.</p>
       </details>
     </aside>
@@ -487,7 +488,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn lock${s.locked?' o
    ${s.who||s.idea?`<div class="scinfo">${s.who?`<span class="who">🎭 ${esc(s.who)}</span>`:''}${s.idea?`<span class="idea">🖼 ${esc(s.idea)}</span><button class="smallbtn ideaCopy" title="Copiar la idea de imagen">⧉</button><button class="smallbtn ideaFind" title="Buscar imágenes con esta idea">🔎</button>`:''}</div>`:''}
    <div class="row">${SR?`<button class="smallbtn dictate ${s.dictating?'on':''}">${s.dictating?'● Escuchando…':'🗣 Dictar'}</button>`:''}<button class="smallbtn lang" title="Traducir el texto">${s.lang==='en'?'🇲🇽 Regresar a español':'🇺🇸 Pasar a inglés'}</button><select class="pos"><option value="bottom">Texto abajo</option><option value="center">Texto al centro</option><option value="top">Texto arriba</option></select><span class="micro">Si es largo, aparece por partes.</span></div>
   </div>
-  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
+  <div class="narration"><button class="smallbtn rec ${s.recording?'on':''}">${s.recording?'● Detener grabación':'🎙 Grabar voz'}</button><button class="smallbtn tts">🔊 Texto a voz</button><button class="smallbtn stVoice" title="Grabar y mejorar la voz en Estudio Beat">🎚 Estudio de voz</button><label class="smallbtn">♫ Cargar audio<input class="audioFile" type="file" accept="audio/*" hidden></label>${s.audioUrl?`<button class="smallbtn rmA" title="Quitar audio">✕</button>`:''}<span class="audio-name">${s.audioUrl?esc(s.audioName||'Audio listo')+(s.audioDur?' · '+fmtS(s.audioDur):''):''}</span></div>
   
   ${s.audioUrl?fxPanel(s):''}
   ${s.kind?movPanel(s):''}
@@ -520,6 +521,7 @@ ${miniHead(s)}<div class="scene-tools"><button class="iconbtn lock${s.locked?' o
     q('.up').onclick=()=>move(i,1);q('.down').onclick=()=>move(i,-1);q('.dup').onclick=()=>duplicate(i);
     q('.rec').onclick=()=>s.recording?stopRecording(s):startRecording(s);
     const af=q('.audioFile');af.onchange=()=>{const f=af.files[0];if(f)setAudio(s,f,f.name)};
+    q('.stVoice').onclick=()=>{if(s.locked)return;openStudio('voice',`🎙 Voz · escena ${i+1}`,(b,n)=>{s.fx={preset:'normal',pitch:0,tone:0,vol:(s.fx&&s.fx.vol)||1};setAudio(s,b,'Voz del Estudio')})};
     if(s.audioUrl)wireFx(s,el);
     if(s.kind){wireMov(s,el);wireLay(s,el)}
     wireMus(s,el);
@@ -1240,6 +1242,31 @@ $('#optTransition').onchange=e=>settings.transition=e.target.checked;
 $('#optMotion').onchange=e=>settings.motion=e.target.checked;
 $('#musicVol').oninput=e=>{settings.musicVol=+e.target.value;refreshMusLabels()};
 function refreshMusLabels(){scenes.forEach(x=>{const e=root.querySelector(`[data-id="${x.id}"] .mus-sum`);if(e)e.textContent=musLabel(x)})}
+$('#musicStudio').onclick=()=>openStudio('seq','🎵 Música de todo el video',(b,n)=>{settings.musicBlob=b;settings.musicName=n||'Mi beat';settings.musicPreset='file';syncSettingsUI();refreshMusLabels();playMusicPreview()});
+/* ---------- Estudio Beat Pro dentro del Creador ---------- */
+const STUDIO_URL=/^(fernando1287\.github\.io|localhost|127\.0\.0\.1)$/.test(location.hostname)?'/estudio-beat/':'https://fernando1287.github.io/estudio-beat/';
+const AUDIO_EXT=/\.(wav|mp3|webm|ogg|oga|m4a|aac|flac|opus)$/i;
+function openStudio(tab,title,onAudio){
+  closeStudio();stopMusicPreview&&stopMusicPreview();
+  const ov=document.createElement('div');ov.id='studioOv';
+  ov.innerHTML=`<div class="stbar"><button class="btn st-back" title="Volver al Creador sin cambiar nada">←</button><div class="st-t"><b>${esc(title)}</b><span class="st-h">${tab==='voice'?'Graba tu voz, ponle efectos y toca':'Crea tu beat y toca'} <b>✓ Usar</b>.</span></div><button class="btn primary st-use">✓ Usar ${tab==='voice'?'voz':'música'}</button></div><iframe allow="microphone; autoplay" src="${STUDIO_URL}?desde=creador#${tab}"></iframe><div class="st-load">Abriendo Estudio Beat…</div>`;
+  document.body.append(ov);document.body.classList.add('st-open');
+  const fr=ov.querySelector('iframe');
+  ov.querySelector('.st-back').onclick=closeStudio;
+  fr.onload=()=>{ov.querySelector('.st-load')?.remove();let w;
+    try{w=fr.contentWindow;if(!w.document||!w.document.body)throw 0}catch{ov.querySelector('.st-h').innerHTML='Exporta tu audio en el Estudio y luego usa <b>Cargar audio</b> / <b>Subir canción</b>.';return}
+    const A=w.HTMLAnchorElement.prototype,orig=A.click;
+    if(!A.__creador){A.__creador=1;A.click=function(){const h=this.href||'',n=this.download||'';
+      if(h.startsWith('blob:')&&AUDIO_EXT.test(n)&&w.__toCreador){w.__toCreador(h,n);return}return orig.call(this)}}
+    w.__toCreador=async(h,n)=>{try{const b0=await (await w.fetch(h)).blob();const ab=await b0.arrayBuffer();
+        const type=b0.type&&b0.type.startsWith('audio/')?b0.type:(/\.wav$/i.test(n)?'audio/wav':/\.mp3$/i.test(n)?'audio/mpeg':'audio/webm');
+        const blob=new Blob([ab],{type});closeStudio();let nm=n.replace(/\.\w+$/,'').replace(/_/g,' ').trim();if(!nm||/^cancion$/i.test(nm))nm=tab==='voice'?'Voz del Estudio':'Beat del Estudio';await onAudio(blob,nm);toast('✓ Audio del Estudio listo en tu '+(tab==='voice'?'escena':'música'),4000)}
+      catch(e){console.error(e);toast('No pude traer el audio del Estudio. Descárgalo y súbelo con Cargar audio.')}};
+    ov.querySelector('.st-use').onclick=()=>{const id=tab==='voice'?'#vExport':'#pExport',b=w.document.querySelector(id);if(!b)return toast('No encontré el botón de exportar del Estudio.');if(b.disabled)return;
+      ov.querySelector('.st-use').textContent='⏳ Preparando…';setTimeout(()=>{const u=ov.querySelector('.st-use');if(u)u.textContent='✓ Usar '+(tab==='voice'?'voz':'música')},tab==='voice'?3000:30000);b.click()};
+    const goTab=()=>{const t=w.document.querySelector(`.tab[data-tab="${tab}"]`);if(t)t.click()};goTab();setTimeout(goTab,400)};
+}
+function closeStudio(){const ov=document.getElementById('studioOv');if(!ov)return;const fr=ov.querySelector('iframe');try{fr.src='about:blank'}catch{}ov.remove();document.body.classList.remove('st-open')}
 $('#musicFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;settings.musicBlob=f;settings.musicName=f.name;settings.musicPreset='file';syncSettingsUI();refreshMusLabels();playMusicPreview()};
 $('#musicChips').onclick=e=>{const k=e.target.dataset&&e.target.dataset.m;if(k===undefined)return;if(k==='file'&&!settings.musicBlob)return;settings.musicPreset=k;syncSettingsUI();refreshMusLabels();if(k)playMusicPreview();else stopMusicPreview()};
 $('#musicPlay').onclick=()=>{if(musicPrev.src){stopMusicPreview();return}playMusicPreview()};
@@ -1839,7 +1866,7 @@ function musPanel(s){
   return`<details class="fx mus" ${s.musOpen?'open':''}><summary>🎵 Música de esta escena <span class="mus-sum">${esc(musLabel(s))}</span></summary><div class="fx-body">
 <div class="chips">${chips.map(([key,n])=>`<button class="chip ${k===key?'act':''}" data-mus="${key}">${esc(n)}</button>`).join('')}</div>
 <div class="sl"><div class="sl-top">Volumen de la música <b class="v-mvol">${Math.round(vol*100)}%</b></div><input type="range" class="m-vol" min="0" max="1" step="0.05" value="${vol}"><div class="sl-ends"><span>🔈 Más bajo</span><span>Más alto 🔊</span></div></div>
-<div class="fx-actions"><button class="smallbtn m-play">▶ Escuchar</button><label class="smallbtn">⬆ Subir canción<input class="m-file" type="file" accept="audio/*" hidden></label>${s.musicVol!=null?'<button class="smallbtn m-reset">↺ Volumen normal</button>':''}</div>
+<div class="fx-actions"><button class="smallbtn m-play">▶ Escuchar</button><button class="smallbtn m-studio">🎹 Crear en Estudio Beat</button><label class="smallbtn">⬆ Subir canción<input class="m-file" type="file" accept="audio/*" hidden></label>${s.musicVol!=null?'<button class="smallbtn m-reset">↺ Volumen normal</button>':''}</div>
 </div></details>`}
 function wireMus(s,el){
   const q=c=>el.querySelector(c);
@@ -1849,6 +1876,7 @@ function wireMus(s,el){
   const v=q('.m-vol');v.oninput=()=>{s.musicVol=+v.value;q('.v-mvol').textContent=Math.round(s.musicVol*100)+'%';sum();if(musicPrev.g)musicPrev.g.gain.setTargetAtTime(Math.max(0.02,s.musicVol),musicPrev.g.context.currentTime,0.05)};
   v.onchange=()=>{if(!musicPrev.src&&sceneMusic(s))playMusicPreview(s)};
   q('.m-play').onclick=()=>{if(musicPrev.src){stopMusicPreview();return}if(!sceneMusic(s))return toast('Esta escena no tiene música. Elige una pista.');playMusicPreview(s)};
+  q('.m-studio').onclick=()=>{if(s.locked)return;const i=scenes.indexOf(s);openStudio('seq',`🎵 Música · escena ${i+1}`,(b,n)=>{s.musicBlob=b;s.musicName=n||'Mi beat';s.music='file';s.musOpen=true;draw();playMusicPreview(s)})};
   q('.m-file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;s.musicBlob=f;s.musicName=f.name.replace(/\.\w+$/,'');s.music='file';s.musOpen=true;draw();playMusicPreview(s)};
   if(q('.m-reset'))q('.m-reset').onclick=()=>{s.musicVol=null;draw()};
 }
